@@ -1,190 +1,188 @@
-use macroquad::prelude::*;
+use bevy::prelude::*;
+use camera::CameraPlugin;
+use common::Grid;
+use glyph::{on_status_change, setup_tileset, update_glyph_sprite, update_positions, Glyph, Position, Tileset};
+use player::{on_player_move, player_input, setup_player};
+use projection::{chunk_idx, chunk_local_to_world, chunk_xyz, CHUNK_SIZE, MAP_SIZE, Z_LAYER_GROUND};
+use world::{Chunk, ChunkStatus, Chunks, MapPlugin};
 
-const CRT_FRAGMENT_SHADER: &str = include_str!("assets/crt-shader.glsl");
-const CRT_VERTEX_SHADER:&str = "#version 100
-attribute vec3 position;
-attribute vec2 texcoord;
-attribute vec4 color0;
+mod common;
+mod camera;
+mod world;
+mod player;
+mod glyph;
+mod projection;
 
-varying lowp vec2 uv;
-varying lowp vec4 color;
-
-uniform mat4 Model;
-uniform mat4 Projection;
-
-void main() {
-    gl_Position = Projection * Model * vec4(position, 1);
-    color = color0 / 255.0;
-    uv = texcoord;
-}
-";
-
-
-enum GameState {
-    MainMenu,
+#[derive(Default, States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum GameState {
+    #[default]
+    Loading,
     Playing,
-    Paused,
-    GameOver,
 }
 
-fn window_conf() -> Conf {
-    Conf {
-        window_title: "Rogue Cowboy".to_string(),
-        window_width: 800,
-        window_height: 600,
-        // high_dpi: todo!(),
-        fullscreen: false,
-        // sample_count: todo!(),
-        window_resizable: true,
-        // platform: todo!(),
-        ..Default::default()
+pub fn go_to_state(state:GameState) -> impl Fn(ResMut<NextState<GameState>>) {
+    move |mut next| {
+        next.set(state);
     }
 }
 
-fn get_preferred_size(texel_size: u32) -> IVec2 {
-    ivec2((screen_width() / texel_size as f32) as i32, (screen_height() / texel_size as f32) as i32)
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(CameraPlugin)
+        .add_plugins(MapPlugin)
+        .init_state::<GameState>()
+        .insert_resource(ClearColor(Color::srgb_u8(19, 27, 37)))
+        .init_resource::<Tileset>()
+        .add_event::<LoadChunkEvent>()
+        .add_event::<UnloadChunkEvent>()
+        .add_systems(OnEnter(GameState::Loading), (setup_tileset, go_to_state(GameState::Playing)).chain())
+        .add_systems(OnEnter(GameState::Playing), (setup_player).chain())
+        .add_systems(Update, (player_input, on_player_move, on_load_chunk, on_unload_chunk).chain().run_if(in_state(GameState::Playing)))
+        .add_systems(Update, (update_glyph_sprite, update_positions, on_status_change))
+        .add_systems(Update, load_nearby_chunks.run_if(in_state(GameState::Playing).and(resource_changed::<Chunks>)))
+        .run();
 }
 
-#[macroquad::main(window_conf)]
-async fn main() {
-    set_default_filter_mode(FilterMode::Nearest);
-    let texel_size = 1;
-    let mut pref_size: IVec2 = get_preferred_size(texel_size);
+#[derive(Event)]
+struct LoadChunkEvent {
+    pub idx: usize,
+    pub is_active: bool,
+}
 
-    let mut main_render_target = render_target(pref_size.x as u32, pref_size.y as u32);
-    main_render_target.texture.set_filter(FilterMode::Nearest);
+impl LoadChunkEvent {
+    pub fn new(idx:usize) -> Self {
+        Self {
+            idx,
+            is_active: false,
+        }
+    }
+}
 
-    rand::srand(miniquad::date::now() as u64);
+#[derive(Event)]
+struct UnloadChunkEvent {
+    pub idx: usize,
+}
 
-    let mut game_state = GameState::MainMenu;
+fn load_nearby_chunks(
+    chunks: Res<Chunks>,
+    mut e_load_chunk: EventWriter<LoadChunkEvent>,
+    mut e_unload_chunk: EventWriter<UnloadChunkEvent>,
+    q_chunks: Query<&Chunk>
+) {
+    info!("chunk changed {}", chunks.active_idx);
+    e_load_chunk.send(LoadChunkEvent { idx: chunks.active_idx, is_active: true });
 
-    let crt_material = load_material(
-        ShaderSource::Glsl {
-            vertex: CRT_VERTEX_SHADER,
-            fragment: CRT_FRAGMENT_SHADER,
-        },
-        MaterialParams {
-            uniforms: vec![
-                UniformDesc::new("iResolution", UniformType::Float2),
-                UniformDesc::new("iTime", UniformType::Float1),
-            ],
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    let (x, y, z) = chunk_xyz(chunks.active_idx);
 
-    loop {
-        pref_size = get_preferred_size(texel_size);
-        let pref_size_f32 = pref_size.as_vec2();
-        let cur_target_size = main_render_target.texture.size().as_ivec2();
+    let mut neighbors = vec![];
 
-        if cur_target_size != pref_size {
-            main_render_target = render_target(pref_size.x as u32, pref_size.y as u32);
-            main_render_target.texture.set_filter(FilterMode::Nearest);
+    if y < MAP_SIZE.1 - 1 {
+        let north_idx = chunk_idx(x, y + 1, z);
+        neighbors.push(north_idx);
+
+        if x < MAP_SIZE.0 - 1 {
+            let north_east_idx = chunk_idx(x + 1, y + 1, z);
+            neighbors.push(north_east_idx);
         }
 
-        set_camera(&Camera2D {
-            zoom: vec2(1. / pref_size_f32.x * 2., 1. / pref_size_f32.y * 2.),
-            target: vec2((pref_size_f32.x * 0.5f32).floor(), (pref_size_f32.y * 0.5f32).floor()),
-            render_target: Some(main_render_target.clone()),
-            ..Default::default()
+        if x > 0 {
+            let north_west_idx = chunk_idx(x - 1, y + 1, z);
+            neighbors.push(north_west_idx);
+        }
+    }
+
+    if y > 0 {
+        let south_idx = chunk_idx(x, y - 1, z);
+        neighbors.push(south_idx);
+
+        if x < MAP_SIZE.0 - 1 {
+            let south_east_idx = chunk_idx(x + 1, y - 1, z);
+            neighbors.push(south_east_idx);
+        }
+
+        if x > 0 {
+            let south_west_idx = chunk_idx(x - 1, y - 1, z);
+            neighbors.push(south_west_idx);
+        }
+    }
+
+    if x < MAP_SIZE.0 - 1 {
+        let east_idx = chunk_idx(x + 1, y, z);
+        neighbors.push(east_idx);
+    }
+
+    if x > 0 {
+        let west_idx = chunk_idx(x - 1, y, z);
+        neighbors.push(west_idx);
+    }
+
+    for idx in neighbors.iter() {
+        e_load_chunk.send(LoadChunkEvent::new(*idx));
+    }
+
+    for chunk in q_chunks.iter() {
+        if !neighbors.contains(&chunk.idx()) && chunk.idx() != chunks.active_idx {
+            e_unload_chunk.send(UnloadChunkEvent { idx: chunk.idx() });
+        }
+    };
+
+}
+
+fn on_unload_chunk(mut e_unload_chunk: EventReader<UnloadChunkEvent>, mut cmds: Commands, q_chunks: Query<(Entity, &Chunk)>) {
+    for e in e_unload_chunk.read() {
+        let Some((chunk_e, _)) = q_chunks.iter().find(|(_, c)| c.idx() == e.idx) else {
+            continue;
+        };
+        
+        info!("unload chunk! {}", e.idx);
+        cmds.entity(chunk_e).despawn_recursive();
+    }
+}
+
+fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Commands, mut q_chunks: Query<&mut Chunk>) {
+    for e in e_load_chunk.read() {
+        let status = if e.is_active { ChunkStatus::Active } else { ChunkStatus::Dormant };
+        // if this chunk already exists, make sure the status matches expected
+        if let Some(mut existing) = q_chunks.iter_mut().find(|x| x.idx() == e.idx) {
+            if existing.is_active != e.is_active {
+                info!("change chunk status {} -> {}", e.idx, e.is_active);
+                existing.is_active = e.is_active;
+
+                for tile in existing.tiles.iter() {
+                    cmds.entity(*tile).insert(status);
+                }
+            }
+
+            continue;
+        }
+
+        info!("spawn chunk {}", e.idx);
+        let chunk_e = cmds.spawn((
+            Name::new(format!("chunk-{}", e.idx)),
+            Transform::default(),
+            Visibility::Visible,
+        )).id();
+
+        let tiles = Grid::init_fill(CHUNK_SIZE.0, CHUNK_SIZE.1, |x, y| {
+            let wpos = chunk_local_to_world(e.idx, x, y);
+
+            let tile_id = cmds.spawn((
+                Glyph {
+                    idx: 0,
+                    fg: Color::srgb_u8(35, 37, 37),
+                    bg: Color::srgb_u8(0, 0, 0)
+                },
+                Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
+                status,
+            )).set_parent(chunk_e).id();
+
+            tile_id
         });
-        clear_background(BLACK);
-        gl_use_default_material();
 
-        match game_state {
-            GameState::MainMenu => {
-                if is_key_pressed(KeyCode::Escape) {
-                    std::process::exit(0);
-                }
-                if is_key_pressed(KeyCode::Space) {
-                    game_state = GameState::Playing;
-                }
-                let text = "Press space";
-                let text_dimensions = measure_text(text, None, 32, 1.0);
-                draw_text_ex(
-                    text,
-                    pref_size_f32.x / 2.0 - text_dimensions.width / 2.0,
-                    pref_size_f32.y / 2.0,
-                    TextParams {
-                        font: None,
-                        font_size: 32, font_scale: 1.0, font_scale_aspect: 1.0, rotation: 0., color: WHITE }
-                );
-            }
-            GameState::Playing => {
-                let delta_time = get_frame_time();
-                if is_key_pressed(KeyCode::Escape) {
-                    game_state = GameState::Paused;
-                }
+        let mut chunk = Chunk::new(e.idx, tiles);
+        chunk.is_active = e.is_active;
 
-                draw_circle(50., 75., 200., YELLOW);
-                draw_text(
-                    format!("yooo: {}", delta_time).as_str(),
-                    32.0,
-                    32.,
-                    16.0,
-                    WHITE,
-                );
-            }
-            GameState::Paused => {
-                if is_key_pressed(KeyCode::Space) {
-                    game_state = GameState::Playing;
-                }
-                let text = "Paused";
-                let text_dimensions = measure_text(text, None, 32, 1.0);
-                draw_text(
-                    text,
-                    pref_size_f32.x / 2.0 - text_dimensions.width / 2.0,
-                    pref_size_f32.y / 2.0,
-                    32.0,
-                    WHITE,
-                );
-            }
-            GameState::GameOver => {
-                if is_key_pressed(KeyCode::Space) {
-                    game_state = GameState::MainMenu;
-                }
-                let text = "GAME OVER!";
-                let text_dimensions = measure_text(text, None, 16, 1.0);
-                draw_text(
-                    text,
-                    pref_size_f32.x / 2.0 - text_dimensions.width / 2.0,
-                    pref_size_f32.y / 2.0,
-                    16.0,
-                    RED,
-                );
-            }
-        }
-
-        set_default_camera();
-        clear_background(BLACK);
-        crt_material.set_uniform("iTime", get_time() as f32);
-        crt_material.set_uniform("iResolution", (pref_size_f32.x, pref_size_f32.y));
-        gl_use_material(&crt_material);
-
-        let screen_pad_x = (screen_width() - ((pref_size.x as f32) * (texel_size as f32))) * 0.5;
-        let screen_pad_y = (screen_height() - ((pref_size.y as f32) * (texel_size as f32))) * 0.5;
-        let dest_size = pref_size_f32 * vec2(texel_size as f32, texel_size as f32);
-
-        draw_texture_ex(
-            &main_render_target.texture,
-            screen_pad_x,
-            screen_pad_y,
-            WHITE,
-            DrawTextureParams {
-                dest_size: Some(dest_size),
-                ..Default::default()
-            },
-        );
-        gl_use_default_material();
-
-        draw_text(
-            get_fps().to_string().as_str(),
-            16.0,
-            32.0,
-            16.0,
-            GREEN,
-        );
-        next_frame().await
+        cmds.entity(chunk_e).insert(chunk);
     }
 }

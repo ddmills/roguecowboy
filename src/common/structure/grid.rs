@@ -1,3 +1,5 @@
+use std::slice::Iter;
+
 
 // A Column-major 2D grid
 #[allow(dead_code)]
@@ -10,17 +12,25 @@ pub struct Grid<T> {
 
 #[allow(dead_code)]
 impl<T> Grid<T> {
-    pub fn new(width: usize, height: usize) -> Self {
+    pub fn init(width: usize, height: usize, value: T) -> Self where T: Clone {
         Self {
-            data: Vec::with_capacity(width * height),
+            data: vec![value; width * height],
             width,
             height,
         }
     }
 
-    pub fn init(width: usize, height: usize, value: T) -> Self where T: Clone {
+    pub fn init_fill<F>(width: usize, height: usize, mut fill_fn: F) -> Self where F: FnMut(usize, usize) -> T {
+        let mut data = Vec::with_capacity(width * height);
+
+        for x in 0..width {
+            for y in 0..height {
+                data.push(fill_fn(x, y));
+            }
+        }
+
         Self {
-            data: vec![value; width * height],
+            data,
             width,
             height,
         }
@@ -64,6 +74,10 @@ impl<T> Grid<T> {
     #[inline]
     pub fn clear(&mut self, value: T) where T: Clone {
         self.data.fill(value);
+    }
+
+    pub fn iter(&self) -> Iter<T> {
+        self.data.iter()
     }
 
     pub fn fill<F>(&mut self, fill_fn: F) where F: Fn(usize, usize) -> T {

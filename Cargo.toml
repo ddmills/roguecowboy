@@ -7,4 +7,4 @@ edition = "2024"
 opt-level = 3
 
 [dependencies]
-macroquad = "0.4.13"
+bevy = "0.15.2"
