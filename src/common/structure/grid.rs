@@ -1,0 +1,77 @@
+
+// A Column-major 2D grid
+#[allow(dead_code)]
+#[derive(Clone)]
+pub struct Grid<T> {
+    data: Vec<T>,
+    width: usize,
+    height: usize,
+}
+
+#[allow(dead_code)]
+impl<T> Grid<T> {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            data: Vec::with_capacity(width * height),
+            width,
+            height,
+        }
+    }
+
+    pub fn init(width: usize, height: usize, value: T) -> Self where T: Clone {
+        Self {
+            data: vec![value; width * height],
+            width,
+            height,
+        }
+    }
+
+    #[inline]
+    pub fn xy(&self, idx:usize) -> (usize, usize) {
+        (idx / self.height, idx % self.height)
+    }
+
+    #[inline]
+    pub fn idx(&self, x: usize, y: usize) -> usize {
+        x * self.height + y
+    }
+
+    #[inline]
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    #[inline]
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    #[inline]
+    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
+        self.data.get(self.idx(x, y))
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
+        self.data.get_mut(x * self.height + y)
+    }
+
+    #[inline]
+    pub fn set(&mut self, x: usize, y: usize, value: T) {
+        self.data[x * self.height + y] = value;
+    }
+
+    #[inline]
+    pub fn clear(&mut self, value: T) where T: Clone {
+        self.data.fill(value);
+    }
+
+    pub fn fill<F>(&mut self, fill_fn: F) where F: Fn(usize, usize) -> T {
+        for x in 0..self.width {
+            for y in 0..self.height {
+                self.set(x, y, fill_fn(x, y));
+            }
+        }
+    }
+}
+
