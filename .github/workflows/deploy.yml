@@ -38,7 +38,7 @@ jobs:
           mkdir -p ./deploy
           cp ./target/wasm32-unknown-unknown/release/roguecowboy.wasm ./deploy/
           cp index.html ./deploy/
-          cp -r assets wasm/ || true # Try to copy, but ignore if it can't copy if source directory does not exist
+          cp -r assets deploy/ || true # Try to copy, but ignore if it can't copy if source directory does not exist
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

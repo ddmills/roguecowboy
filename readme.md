@@ -2,7 +2,7 @@
 WASM web build
 
 ```
-cargo build --release --target wasm32-unknown-unknown
+./build-web.sh
 
-basic-http-server .
+basic-http-server deploy/
 ```
