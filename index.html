@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -19,11 +19,16 @@
         }
     </style>
 </head>
-<body>
-    <canvas id="glcanvas" tabindex='1'></canvas>
-    <!-- Minified and statically hosted version of https://github.com/not-fl3/macroquad/blob/master/js/mq_js_bundle.js -->
-    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
-    <!-- Compiled WASM binary -->
-    <script>load("roguecowboy.wasm");</script>
-</body>
+<body style="margin: 0px;">
+    <script type="module">
+      import init from './bevy_game.js'
+  
+      init().catch((error) => {
+        if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+          throw error;
+        }
+      });
+    </script>
+  </body>
+  
 </html>
