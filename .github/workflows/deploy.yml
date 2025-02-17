@@ -31,7 +31,7 @@ jobs:
 
       - name: Prepare package
         run: |
-          wasm-bindgen --no-typescript --out-name bevy_game --target web target/wasm32-unknown-unknown/release/roguecowboy.wasm
+          wasm-bindgen --no-typescript --out-dir deploy --out-name bevy_game --target web target/wasm32-unknown-unknown/release/roguecowboy.wasm
 
       - name: Prepare Deployment Directory
         run: |
