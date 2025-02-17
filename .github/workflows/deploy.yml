@@ -38,7 +38,6 @@ jobs:
           mkdir -p ./deploy
           cp ./target/wasm32-unknown-unknown/release/roguecowboy.wasm ./deploy/
           cp index.html ./deploy/
-          cp bevy_game.js ./deploy/
           cp -r assets wasm/ || true # Try to copy, but ignore if it can't copy if source directory does not exist
 
       - name: Deploy
