@@ -10,7 +10,7 @@ pub fn setup_player(mut cmds: Commands) {
     cmds.spawn((
         Player,
         Glyph {
-            idx: 1,
+            idx: 2,
             fg: Color::srgb_u8(255, 0, 0),
             bg: Color::srgb_u8(0, 0, 255),
         },

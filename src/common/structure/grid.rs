@@ -1,9 +1,11 @@
 use std::slice::Iter;
 
+use serde::{Deserialize, Serialize};
+
 
 // A Column-major 2D grid
 #[allow(dead_code)]
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Grid<T> {
     data: Vec<T>,
     width: usize,
@@ -29,6 +31,14 @@ impl<T> Grid<T> {
             }
         }
 
+        Self {
+            data,
+            width,
+            height,
+        }
+    }
+
+    pub fn init_from_vec(width: usize, height: usize, data:Vec<T>) -> Self {
         Self {
             data,
             width,

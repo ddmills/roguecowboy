@@ -1,4 +1,5 @@
 use bevy::{app::Plugin, ecs::{component::Component, entity::Entity, system::Resource}};
+use serde::{Deserialize, Serialize};
 
 use crate::{common::{Grid, Grid3d}, projection::{CHUNK_SIZE, MAP_SIZE}};
 
@@ -46,12 +47,25 @@ pub struct Chunk {
     idx: usize,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct ChunkSave {
+    pub idx: usize,
+    pub terrain: Grid<Terrain>,
+}
+
 impl Chunk {
-    pub fn new(idx: usize, tiles: Grid<Entity>) -> Self {
+    pub fn new(idx: usize, terrain: Grid<Terrain>, tiles: Grid<Entity>) -> Self {
         Self {
-            terrain: Grid::init(CHUNK_SIZE.0, CHUNK_SIZE.1, Terrain::Grass),
+            terrain,
             idx,
             tiles,
+        }
+    }
+
+    pub fn to_save(&self) -> ChunkSave {
+        ChunkSave {
+            idx: self.idx,
+            terrain: self.terrain.clone(),
         }
     }
 
@@ -68,16 +82,18 @@ impl Chunk {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Deserialize, Serialize)]
 pub enum Terrain {
     #[default]
     Grass,
+    Dirt,
 }
 
 impl Terrain {
     pub fn sprite_idx(&self) -> usize {
         match self {
             Terrain::Grass => 0,
+            Terrain::Dirt => 1,
         }
     }
 }

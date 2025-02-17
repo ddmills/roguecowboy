@@ -80,7 +80,7 @@ pub fn on_status_change(
 ) {
     for (mut glyph, status) in q_changed.iter_mut() {
         if *status == ChunkStatus::Active {
-            glyph.fg = Color::srgb_u8(29, 185, 100);
+            glyph.fg = Color::srgb_u8(255, 255, 255);
         } else {
             glyph.fg = Color::srgb_u8(35, 37, 37);
         }

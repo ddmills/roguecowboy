@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
-use common::Grid;
+use common::{Grid, Rand};
 use glyph::{on_status_change, setup_tileset, update_glyph_sprite, update_positions, Glyph, Position, Tileset};
 use player::{on_player_move, player_input, setup_player};
 use projection::{chunk_idx, chunk_local_to_world, chunk_xyz, CHUNK_SIZE, MAP_SIZE, Z_LAYER_GROUND};
-use world::{Chunk, ChunkStatus, Chunks, MapPlugin};
+use save::{save_chunk, try_load_chunk};
+use world::{Chunk, ChunkSave, ChunkStatus, Chunks, MapPlugin, Terrain};
 
 mod common;
 mod camera;
@@ -12,6 +13,7 @@ mod world;
 mod player;
 mod glyph;
 mod projection;
+mod save;
 
 #[derive(Default, States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -126,15 +128,16 @@ fn load_nearby_chunks(
             e_unload_chunk.send(UnloadChunkEvent { idx: chunk.idx() });
         }
     };
-
 }
 
 fn on_unload_chunk(mut e_unload_chunk: EventReader<UnloadChunkEvent>, mut cmds: Commands, q_chunks: Query<(Entity, &Chunk)>) {
     for e in e_unload_chunk.read() {
-        let Some((chunk_e, _)) = q_chunks.iter().find(|(_, c)| c.idx() == e.idx) else {
+        let Some((chunk_e, chunk)) = q_chunks.iter().find(|(_, c)| c.idx() == e.idx) else {
             continue;
         };
-        
+
+        save_chunk(&chunk.to_save());
+
         info!("unload chunk! {}", e.idx);
         cmds.entity(chunk_e).despawn_recursive();
     }
@@ -157,6 +160,11 @@ fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Comman
 
         info!("spawn chunk {}", e.idx);
 
+        // try load the data
+        let chunk_save = try_load_chunk(e.idx).unwrap_or_else(|| {
+            generate_chunk(e.idx)
+        });
+
         let chunk_e = cmds.spawn((
             Name::new(format!("chunk-{}", e.idx)),
             Transform::default(),
@@ -164,24 +172,45 @@ fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Comman
             e.status,
         )).id();
 
-        let tiles = Grid::init_fill(CHUNK_SIZE.0, CHUNK_SIZE.1, |x, y| {
-            let wpos = chunk_local_to_world(e.idx, x, y);
+        let mut tiles = vec![];
 
-            let tile_id = cmds.spawn((
-                Glyph {
-                    idx: 0,
-                    fg: Color::srgb_u8(35, 37, 37),
-                    bg: Color::srgb_u8(0, 0, 0)
-                },
-                Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
-                e.status,
-            )).set_parent(chunk_e).id();
+        for x in 0..CHUNK_SIZE.0 {
+            for y in 0..CHUNK_SIZE.1 {
+                let terrain = chunk_save.terrain.get(x, y).unwrap();
+                let wpos = chunk_local_to_world(e.idx, x, y);
 
-            tile_id
-        });
+                let tile_id = cmds.spawn((
+                    Glyph {
+                        idx: terrain.sprite_idx(),
+                        fg: Color::srgb_u8(35, 37, 37),
+                        bg: Color::srgb_u8(0, 0, 0)
+                    },
+                    Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
+                    e.status,
+                )).set_parent(chunk_e).id();
 
-        let chunk = Chunk::new(e.idx, tiles);
+                tiles.push(tile_id);
+            }
+        }
+
+        let tile_grid = Grid::init_from_vec(CHUNK_SIZE.0, CHUNK_SIZE.1, tiles);
+        let chunk = Chunk::new(e.idx, chunk_save.terrain, tile_grid);
 
         cmds.entity(chunk_e).insert(chunk);
+    }
+}
+
+fn generate_chunk(chunk_idx: usize) -> ChunkSave
+{
+    let mut r = Rand::new();
+    let terrains = vec![Terrain::Grass, Terrain::Dirt];
+
+    let terrain = Grid::init_fill(CHUNK_SIZE.0, CHUNK_SIZE.1, |x, y| {
+        r.pick(&terrains)
+    });
+
+    ChunkSave {
+        idx: chunk_idx,
+        terrain,
     }
 }
