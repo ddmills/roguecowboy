@@ -5,7 +5,7 @@ use bevy::log::info;
 pub const MAP_SIZE: (usize, usize, usize) = (8, 6, 4);
 
 // width and height of a chunk, in tiles
-pub const CHUNK_SIZE: (usize, usize) = (60, 40);
+pub const CHUNK_SIZE: (usize, usize) = (12, 8);
 
 // width and height of a tile, in pixels
 pub const TILE_SIZE: (usize, usize) = (16, 16);

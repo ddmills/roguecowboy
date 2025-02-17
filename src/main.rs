@@ -47,14 +47,14 @@ fn main() {
 #[derive(Event)]
 struct LoadChunkEvent {
     pub idx: usize,
-    pub is_active: bool,
+    pub status: ChunkStatus,
 }
 
 impl LoadChunkEvent {
     pub fn new(idx:usize) -> Self {
         Self {
             idx,
-            is_active: false,
+            status: ChunkStatus::Dormant,
         }
     }
 }
@@ -71,7 +71,7 @@ fn load_nearby_chunks(
     q_chunks: Query<&Chunk>
 ) {
     info!("chunk changed {}", chunks.active_idx);
-    e_load_chunk.send(LoadChunkEvent { idx: chunks.active_idx, is_active: true });
+    e_load_chunk.send(LoadChunkEvent { idx: chunks.active_idx, status: ChunkStatus::Active });
 
     let (x, y, z) = chunk_xyz(chunks.active_idx);
 
@@ -140,17 +140,15 @@ fn on_unload_chunk(mut e_unload_chunk: EventReader<UnloadChunkEvent>, mut cmds: 
     }
 }
 
-fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Commands, mut q_chunks: Query<&mut Chunk>) {
+fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Commands, mut q_chunks: Query<(Entity, &mut Chunk, &ChunkStatus)>) {
     for e in e_load_chunk.read() {
-        let status = if e.is_active { ChunkStatus::Active } else { ChunkStatus::Dormant };
         // if this chunk already exists, make sure the status matches expected
-        if let Some(mut existing) = q_chunks.iter_mut().find(|x| x.idx() == e.idx) {
-            if existing.is_active != e.is_active {
-                info!("change chunk status {} -> {}", e.idx, e.is_active);
-                existing.is_active = e.is_active;
+        if let Some((ent, mut existing, status)) = q_chunks.iter_mut().find(|(_, x, _)| x.idx() == e.idx) {
+            if *status != e.status {
+                cmds.entity(ent).insert(e.status);
 
                 for tile in existing.tiles.iter() {
-                    cmds.entity(*tile).insert(status);
+                    cmds.entity(*tile).insert(e.status);
                 }
             }
 
@@ -158,10 +156,12 @@ fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Comman
         }
 
         info!("spawn chunk {}", e.idx);
+
         let chunk_e = cmds.spawn((
             Name::new(format!("chunk-{}", e.idx)),
             Transform::default(),
             Visibility::Visible,
+            e.status,
         )).id();
 
         let tiles = Grid::init_fill(CHUNK_SIZE.0, CHUNK_SIZE.1, |x, y| {
@@ -174,14 +174,13 @@ fn on_load_chunk(mut e_load_chunk: EventReader<LoadChunkEvent>, mut cmds: Comman
                     bg: Color::srgb_u8(0, 0, 0)
                 },
                 Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
-                status,
+                e.status,
             )).set_parent(chunk_e).id();
 
             tile_id
         });
 
-        let mut chunk = Chunk::new(e.idx, tiles);
-        chunk.is_active = e.is_active;
+        let chunk = Chunk::new(e.idx, tiles);
 
         cmds.entity(chunk_e).insert(chunk);
     }

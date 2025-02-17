@@ -44,7 +44,6 @@ pub struct Chunk {
     terrain: Grid<Terrain>,
     pub tiles: Grid<Entity>,
     idx: usize,
-    pub is_active: bool,
 }
 
 impl Chunk {
@@ -53,7 +52,6 @@ impl Chunk {
             terrain: Grid::init(CHUNK_SIZE.0, CHUNK_SIZE.1, Terrain::Grass),
             idx,
             tiles,
-            is_active: false,
         }
     }
 

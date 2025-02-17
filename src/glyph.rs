@@ -49,7 +49,8 @@ pub fn update_glyph_sprite(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<G
 
 pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (position, mut transform) in q_changed.iter_mut() {
-        transform.translation = tile_translation(position.x, position.y).extend(position.layer as f32);
+        let target = tile_translation(position.x, position.y).extend(position.layer as f32);
+        transform.translation = target;
     }
 }
 
