@@ -1,6 +1,18 @@
 use bevy::{math::vec2, prelude::*};
 
-use crate::{projection::{world_to_px, TILE_SIZE}, world::ChunkStatus};
+use crate::{projection::{world_to_px, TILE_SIZE}, world::ChunkStatus, GameState};
+
+pub struct GlyphPlugin;
+
+impl Plugin for GlyphPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, (
+            update_glyph_sprites,
+            update_positions,
+            on_status_change
+        ).run_if(in_state(GameState::Playing)));
+    }
+}
 
 #[derive(Component, Default)]
 #[require(Sprite)]
@@ -36,7 +48,7 @@ pub fn tile_translation(x: usize, y: usize) -> Vec2 {
 }
 
 // update any sprites that have glyph changed
-pub fn update_glyph_sprite(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<Glyph>>, tileset: Res<Tileset>) {
+pub fn update_glyph_sprites(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<Glyph>>, tileset: Res<Tileset>) {
     for (glyph, mut sprite) in q_changed.iter_mut() {
         sprite.image = tileset.texture.clone_weak();
         sprite.texture_atlas = Some(TextureAtlas {
