@@ -12,15 +12,26 @@ pub fn save_chunk(chunk: &ChunkSave) {
 
     let file_path = format!("saves/chunk-{}.ron", chunk.idx);
     debug!("saving {}", file_path);
+    store(file_path, save_data);
+}
 
-    #[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
+fn store(file_path: String, data: String) {
     IoTaskPool::get()
         .spawn(async move {
             File::create(file_path)
-                .and_then(|mut file| file.write(save_data.as_bytes()))
+                .and_then(|mut file| file.write(data.as_bytes()))
                 .expect("Error while writing save file");
         })
         .detach();
+}
+
+#[cfg(target_arch = "wasm32")]
+fn store(file_path: String, data: String) -> Option<()> {
+    let window = web_sys::window()?;
+    let storage = window.local_storage().ok()??;
+
+    storage.set_item(&file_path, &data).ok()
 }
 
 pub fn try_load_chunk(chunk_idx: usize) -> Option<ChunkSave> {
@@ -28,10 +39,7 @@ pub fn try_load_chunk(chunk_idx: usize) -> Option<ChunkSave> {
 
     debug!("loading {}", file_path);
 
-    #[cfg(not(target_arch = "wasm32"))]
-    let Ok(contents) = fs::read_to_string(&file_path) else {
-        return None;
-    };
+    let contents = read(&file_path)?;
 
     let Ok(chunk) = ron::from_str::<ChunkSave>(&contents) else {
         warn!("Could not deserialize chunk save! corrupt? {}", file_path);
@@ -39,4 +47,18 @@ pub fn try_load_chunk(chunk_idx: usize) -> Option<ChunkSave> {
     };
 
     Some(chunk)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn read(file_path: &String) -> Option<String>
+{
+    fs::read_to_string(file_path).ok()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn read(file_path: &String) -> Option<String> {
+    let window =  web_sys::window()?;
+    let storage = window.local_storage().ok()??;
+
+    storage.get_item(&file_path).ok()?
 }

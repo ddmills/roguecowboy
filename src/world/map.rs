@@ -218,20 +218,8 @@ fn load_nearby_chunks(
         }
     }
 
-    let mut chunks_to_unload = [cur_active_chunks, cur_dormant_chunks].concat();
+    let chunks_to_unload = [cur_active_chunks, cur_dormant_chunks].concat();
     
-    // chunks_to_unload.sort();
-    // chunks_to_unload.dedup();
-
-    // chunks_to_load.sort();
-    // chunks_to_load.dedup();
-
-    // chunks_to_active.sort();
-    // chunks_to_active.dedup();
-
-    // chunks_to_dormant.sort();
-    // chunks_to_dormant.dedup();
-
     for idx in chunks_to_load.iter() {
         e_load_chunk.send(LoadChunkEvent(*idx));
     }

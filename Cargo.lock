@@ -3441,6 +3441,7 @@ dependencies = [
  "rand",
  "ron",
  "serde",
+ "web-sys",
 ]
 
 [[package]]
