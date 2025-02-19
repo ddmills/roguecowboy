@@ -1,6 +1,12 @@
-use std::{fs::{self, File}, io::Write};
+use std::{
+    fs::{self, File},
+    io::Write,
+};
 
-use bevy::{log::{debug, error, warn}, tasks::IoTaskPool};
+use bevy::{
+    log::{debug, error, warn},
+    tasks::IoTaskPool,
+};
 
 use crate::world::ChunkSave;
 
@@ -50,14 +56,13 @@ pub fn try_load_chunk(chunk_idx: usize) -> Option<ChunkSave> {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn read(file_path: &String) -> Option<String>
-{
+fn read(file_path: &String) -> Option<String> {
     fs::read_to_string(file_path).ok()
 }
 
 #[cfg(target_arch = "wasm32")]
 fn read(file_path: &String) -> Option<String> {
-    let window =  web_sys::window()?;
+    let window = web_sys::window()?;
     let storage = window.local_storage().ok()??;
 
     storage.get_item(&file_path).ok()?

@@ -22,47 +22,36 @@ pub fn chunk_idx(x: usize, y: usize, z: usize) -> usize {
 // Convert a chunk index to a chunk position
 #[inline]
 pub fn chunk_xyz(chunk_idx: usize) -> (usize, usize, usize) {
-    (chunk_idx / (MAP_SIZE.1 * MAP_SIZE.2), (chunk_idx / MAP_SIZE.2) % MAP_SIZE.1, chunk_idx % MAP_SIZE.2)
+    (
+        chunk_idx / (MAP_SIZE.1 * MAP_SIZE.2),
+        (chunk_idx / MAP_SIZE.2) % MAP_SIZE.1,
+        chunk_idx % MAP_SIZE.2,
+    )
 }
 
 // convert world coordinates to local chunk coordinates
 #[inline]
-pub fn world_to_chunk_local(x: usize, y: usize, z: usize) -> (usize, usize, usize)
-{
-    (
-        x % CHUNK_SIZE.0,
-        y % CHUNK_SIZE.1,
-        z,
-    )
+pub fn world_to_chunk_local(x: usize, y: usize, z: usize) -> (usize, usize, usize) {
+    (x % CHUNK_SIZE.0, y % CHUNK_SIZE.1, z)
 }
 
 // convert local chunk coordinates to world coordinates
 #[inline]
-pub fn chunk_local_to_world(chunk_idx: usize, x: usize, y: usize) -> (usize, usize, usize)
-{
+pub fn chunk_local_to_world(chunk_idx: usize, x: usize, y: usize) -> (usize, usize, usize) {
     let cpos: (usize, usize, usize) = chunk_xyz(chunk_idx);
 
-    (
-        cpos.0 * CHUNK_SIZE.0 + x,
-        cpos.1 * CHUNK_SIZE.1 + y,
-        cpos.2,
-    )
+    (cpos.0 * CHUNK_SIZE.0 + x, cpos.1 * CHUNK_SIZE.1 + y, cpos.2)
 }
 
 #[inline]
 pub fn world_to_chunk_idx(x: usize, y: usize, z: usize) -> usize {
-    let cpos = (
-        x / CHUNK_SIZE.0,
-        y / CHUNK_SIZE.1,
-        z
-    );
+    let cpos = (x / CHUNK_SIZE.0, y / CHUNK_SIZE.1, z);
 
     chunk_idx(cpos.0, cpos.1, cpos.2)
 }
 
 #[inline]
-pub fn world_to_px(x: usize, y: usize) -> (usize, usize)
-{
+pub fn world_to_px(x: usize, y: usize) -> (usize, usize) {
     (x * TILE_SIZE.0, y * TILE_SIZE.1)
 }
 

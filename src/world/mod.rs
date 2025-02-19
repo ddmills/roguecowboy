@@ -1,5 +1,5 @@
-mod map;
 mod chunk_gen;
+mod map;
 
-pub use map::*;
 pub use chunk_gen::*;
+pub use map::*;

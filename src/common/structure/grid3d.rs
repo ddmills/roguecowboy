@@ -1,4 +1,3 @@
-
 // A Column-major 3D grid
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -20,7 +19,10 @@ impl<T> Grid3d<T> {
         }
     }
 
-    pub fn init(width: usize, height: usize, depth: usize, value: T) -> Self where T: Clone {
+    pub fn init(width: usize, height: usize, depth: usize, value: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
             data: vec![value; width * height],
             width,
@@ -30,8 +32,12 @@ impl<T> Grid3d<T> {
     }
 
     #[inline]
-    pub fn xyz(&self, idx:usize) -> (usize, usize, usize) {
-        (idx / (self.height * self.depth), (idx / self.depth) % self.height, idx % self.depth)
+    pub fn xyz(&self, idx: usize) -> (usize, usize, usize) {
+        (
+            idx / (self.height * self.depth),
+            (idx / self.depth) % self.height,
+            idx % self.depth,
+        )
     }
 
     #[inline]
@@ -61,7 +67,8 @@ impl<T> Grid3d<T> {
 
     #[inline]
     pub fn get_mut(&mut self, x: usize, y: usize, z: usize) -> Option<&mut T> {
-        self.data.get_mut(x * self.height * self.depth + y * self.depth + z)
+        self.data
+            .get_mut(x * self.height * self.depth + y * self.depth + z)
     }
 
     #[inline]
@@ -70,11 +77,17 @@ impl<T> Grid3d<T> {
     }
 
     #[inline]
-    pub fn clear(&mut self, value: T) where T: Clone {
+    pub fn clear(&mut self, value: T)
+    where
+        T: Clone,
+    {
         self.data.fill(value);
     }
 
-    pub fn fill<F>(&mut self, fill_fn: F) where F: Fn(usize, usize, usize) -> T {
+    pub fn fill<F>(&mut self, fill_fn: F)
+    where
+        F: Fn(usize, usize, usize) -> T,
+    {
         for x in 0..self.width {
             for y in 0..self.height {
                 for z in 0..self.depth {

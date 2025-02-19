@@ -1,16 +1,20 @@
 use bevy::{math::vec2, prelude::*};
 
-use crate::{projection::{world_to_px, TILE_SIZE}, world::ChunkStatus, GameState};
+use crate::{
+    GameState,
+    projection::{TILE_SIZE, world_to_px},
+    world::ChunkStatus,
+};
 
 pub struct GlyphPlugin;
 
 impl Plugin for GlyphPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            update_glyph_sprites,
-            update_positions,
-            on_status_change
-        ).run_if(in_state(GameState::Playing)));
+        app.add_systems(
+            Update,
+            (update_glyph_sprites, update_positions, on_status_change)
+                .run_if(in_state(GameState::Playing)),
+        );
     }
 }
 
@@ -33,12 +37,7 @@ pub struct Position {
 
 impl Position {
     pub fn new(x: usize, y: usize, z: usize, layer: usize) -> Self {
-        Self {
-            x,
-            y,
-            z,
-            layer,
-        }
+        Self { x, y, z, layer }
     }
 }
 
@@ -48,7 +47,10 @@ pub fn tile_translation(x: usize, y: usize) -> Vec2 {
 }
 
 // update any sprites that have glyph changed
-pub fn update_glyph_sprites(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<Glyph>>, tileset: Res<Tileset>) {
+pub fn update_glyph_sprites(
+    mut q_changed: Query<(&Glyph, &mut Sprite), Changed<Glyph>>,
+    tileset: Res<Tileset>,
+) {
     for (glyph, mut sprite) in q_changed.iter_mut() {
         sprite.image = tileset.texture.clone_weak();
         sprite.texture_atlas = Some(TextureAtlas {
@@ -61,7 +63,7 @@ pub fn update_glyph_sprites(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<
 
 pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (position, mut transform) in q_changed.iter_mut() {
-        let z= (10 * position.z + (10 - position.layer)) as f32;
+        let z = (10 * position.z + (10 - position.layer)) as f32;
         let target = tile_translation(position.x, position.y).extend(-z);
         transform.translation = target;
     }
@@ -84,13 +86,11 @@ pub fn setup_tileset(
         8,
         8,
         None,
-        None
+        None,
     ));
 }
 
-pub fn on_status_change(
-    mut q_changed: Query<(&mut Glyph, &ChunkStatus), Changed::<ChunkStatus>>,
-) {
+pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ChunkStatus), Changed<ChunkStatus>>) {
     for (mut glyph, status) in q_changed.iter_mut() {
         if *status == ChunkStatus::Active {
             glyph.fg = Color::srgb_u8(255, 255, 255);

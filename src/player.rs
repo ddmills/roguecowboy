@@ -2,19 +2,21 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::{glyph::{Glyph, Position}, projection::{CHUNK_SIZE, MAP_SIZE, Z_LAYER_ACTORS}, GameState};
+use crate::{
+    GameState,
+    glyph::{Glyph, Position},
+    projection::{CHUNK_SIZE, MAP_SIZE, Z_LAYER_ACTORS},
+};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app
-            .add_event::<PlayerMovedEvent>()
+        app.add_event::<PlayerMovedEvent>()
             .add_systems(OnEnter(GameState::Playing), (setup_player).chain())
             .add_systems(Update, (player_input).run_if(in_state(GameState::Playing)));
     }
 }
-
 
 #[derive(Component)]
 pub struct Player;
@@ -34,7 +36,7 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
             fg: Color::srgb_u8(255, 0, 0),
             bg: Color::srgb_u8(0, 0, 255),
         },
-        Position::new(8, 8, 0, Z_LAYER_ACTORS)
+        Position::new(8, 8, 0, Z_LAYER_ACTORS),
     ));
 
     e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
@@ -48,7 +50,7 @@ pub struct KeyState {
 
 #[derive(Default)]
 pub struct InputRate {
-    keys: HashMap<KeyCode, KeyState>
+    keys: HashMap<KeyCode, KeyState>,
 }
 
 impl InputRate {
@@ -60,21 +62,27 @@ impl InputRate {
             };
 
             if now - s.time > t {
-                self.keys.insert(key, KeyState {
-                    time: now,
-                    delayed: true,
-                });
+                self.keys.insert(
+                    key,
+                    KeyState {
+                        time: now,
+                        delayed: true,
+                    },
+                );
 
                 return true;
             }
-            
+
             return false;
         };
 
-        self.keys.insert(key, KeyState {
-            time: now,
-            delayed: false,
-        });
+        self.keys.insert(
+            key,
+            KeyState {
+                time: now,
+                delayed: false,
+            },
+        );
         true
     }
 }
@@ -84,7 +92,7 @@ pub fn player_input(
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
     mut input_rate: Local<InputRate>,
-    mut e_player_moved: EventWriter<PlayerMovedEvent>
+    mut e_player_moved: EventWriter<PlayerMovedEvent>,
 ) {
     let now = time.elapsed_secs_f64();
     let rate = 0.075;
@@ -93,32 +101,50 @@ pub fn player_input(
 
     let mut position = q_player.single_mut();
 
-    if position.x > 0 && keys.pressed(KeyCode::KeyA) && input_rate.try_key(KeyCode::KeyA, now, rate, delay) {
+    if position.x > 0
+        && keys.pressed(KeyCode::KeyA)
+        && input_rate.try_key(KeyCode::KeyA, now, rate, delay)
+    {
         position.x -= 1;
         moved = true;
     }
 
-    if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1 && keys.pressed(KeyCode::KeyD) && input_rate.try_key(KeyCode::KeyD, now, rate, delay) {
+    if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1
+        && keys.pressed(KeyCode::KeyD)
+        && input_rate.try_key(KeyCode::KeyD, now, rate, delay)
+    {
         position.x += 1;
         moved = true;
     }
 
-    if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1 && keys.pressed(KeyCode::KeyW) && input_rate.try_key(KeyCode::KeyW, now, rate, delay) {
+    if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1
+        && keys.pressed(KeyCode::KeyW)
+        && input_rate.try_key(KeyCode::KeyW, now, rate, delay)
+    {
         position.y += 1;
         moved = true;
     }
 
-    if position.y > 0 && keys.pressed(KeyCode::KeyS) && input_rate.try_key(KeyCode::KeyS, now, rate, delay) {
+    if position.y > 0
+        && keys.pressed(KeyCode::KeyS)
+        && input_rate.try_key(KeyCode::KeyS, now, rate, delay)
+    {
         position.y -= 1;
         moved = true;
     }
 
-    if position.z > 0 && keys.pressed(KeyCode::KeyE) && input_rate.try_key(KeyCode::KeyE, now, rate, delay) {
+    if position.z > 0
+        && keys.pressed(KeyCode::KeyE)
+        && input_rate.try_key(KeyCode::KeyE, now, rate, delay)
+    {
         position.z -= 1;
         moved = true;
     }
 
-    if position.z < MAP_SIZE.2 - 1 && keys.pressed(KeyCode::KeyQ) && input_rate.try_key(KeyCode::KeyQ, now, rate, delay) {
+    if position.z < MAP_SIZE.2 - 1
+        && keys.pressed(KeyCode::KeyQ)
+        && input_rate.try_key(KeyCode::KeyQ, now, rate, delay)
+    {
         position.z += 1;
         moved = true;
     }

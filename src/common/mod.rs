@@ -1,5 +1,5 @@
-mod structure;
 mod rand;
+mod structure;
 
-pub use structure::*;
 pub use rand::*;
+pub use structure::*;

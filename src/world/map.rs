@@ -1,9 +1,18 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::{Grid, Grid3d}, glyph::Position, player::Player, projection::{chunk_idx, chunk_xyz, MAP_SIZE}, GameState};
+use crate::{
+    GameState,
+    common::{Grid, Grid3d},
+    glyph::Position,
+    player::Player,
+    projection::{MAP_SIZE, chunk_idx, chunk_xyz},
+};
 
-use super::{on_load_chunk, on_player_move, on_set_chunk_status, on_spawn_chunk, on_unload_chunk, LoadChunkEvent, SetChunkStatusEvent, SpawnChunkEvent, UnloadChunkEvent};
+use super::{
+    LoadChunkEvent, SetChunkStatusEvent, SpawnChunkEvent, UnloadChunkEvent, on_load_chunk,
+    on_player_move, on_set_chunk_status, on_spawn_chunk, on_unload_chunk,
+};
 
 pub struct MapPlugin;
 
@@ -15,15 +24,20 @@ impl Plugin for MapPlugin {
             .add_event::<UnloadChunkEvent>()
             .add_event::<SetChunkStatusEvent>()
             .add_event::<SpawnChunkEvent>()
-            .add_systems(Update, (
-                on_player_move,
-                load_nearby_chunks,
-                on_load_chunk,
-                on_unload_chunk,
-                on_spawn_chunk,
-                on_set_chunk_status,
-                chunk_visibility,
-            ).chain().run_if(in_state(GameState::Playing)));
+            .add_systems(
+                Update,
+                (
+                    on_player_move,
+                    load_nearby_chunks,
+                    on_load_chunk,
+                    on_unload_chunk,
+                    on_spawn_chunk,
+                    on_set_chunk_status,
+                    chunk_visibility,
+                )
+                    .chain()
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
@@ -35,16 +49,14 @@ pub struct Map {
 impl Default for Map {
     fn default() -> Self {
         let chunks = Grid3d::init(MAP_SIZE.0, MAP_SIZE.1, MAP_SIZE.2, OverworldChunk);
-        Self {
-            chunks,
-        }
+        Self { chunks }
     }
 }
 
 #[derive(Component, PartialEq, Eq, Clone, Copy)]
 pub enum ChunkStatus {
     Active,
-    Dormant
+    Dormant,
 }
 
 #[derive(Resource, Default)]
@@ -147,21 +159,23 @@ fn load_nearby_chunks(
     mut e_load_chunk: EventWriter<LoadChunkEvent>,
     mut e_unload_chunk: EventWriter<UnloadChunkEvent>,
     mut e_set_chunk_status: EventWriter<SetChunkStatusEvent>,
-    q_chunks: Query<(&Chunk, &ChunkStatus)>
+    q_chunks: Query<(&Chunk, &ChunkStatus)>,
 ) {
-    let mut cur_dormant_chunks = q_chunks.iter().filter_map(|(c, s)| {
-        match s {
+    let mut cur_dormant_chunks = q_chunks
+        .iter()
+        .filter_map(|(c, s)| match s {
             ChunkStatus::Active => None,
             ChunkStatus::Dormant => Some(c.idx()),
-        }
-    }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
-    let mut cur_active_chunks = q_chunks.iter().filter_map(|(c, s)| {
-        match s {
+    let mut cur_active_chunks = q_chunks
+        .iter()
+        .filter_map(|(c, s)| match s {
             ChunkStatus::Active => Some(c.idx()),
             ChunkStatus::Dormant => None,
-        }
-    }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
 
     let mut needed_chunks = chunks.active.clone();
 
@@ -171,12 +185,12 @@ fn load_nearby_chunks(
         if y < MAP_SIZE.1 - 1 {
             let north_idx = chunk_idx(x, y + 1, z);
             needed_chunks.push(north_idx);
-    
+
             if x < MAP_SIZE.0 - 1 {
                 let north_east_idx = chunk_idx(x + 1, y + 1, z);
                 needed_chunks.push(north_east_idx);
             }
-    
+
             if x > 0 {
                 let north_west_idx = chunk_idx(x - 1, y + 1, z);
                 needed_chunks.push(north_west_idx);
@@ -186,12 +200,12 @@ fn load_nearby_chunks(
         if y > 0 {
             let south_idx = chunk_idx(x, y - 1, z);
             needed_chunks.push(south_idx);
-    
+
             if x < MAP_SIZE.0 - 1 {
                 let south_east_idx = chunk_idx(x + 1, y - 1, z);
                 needed_chunks.push(south_east_idx);
             }
-    
+
             if x > 0 {
                 let south_west_idx = chunk_idx(x - 1, y - 1, z);
                 needed_chunks.push(south_west_idx);
@@ -202,17 +216,17 @@ fn load_nearby_chunks(
             let above_idx = chunk_idx(x, y, z - 1);
             needed_chunks.push(above_idx);
         }
-    
+
         if x < MAP_SIZE.0 - 1 {
             let east_idx = chunk_idx(x + 1, y, z);
             needed_chunks.push(east_idx);
         }
-    
+
         if x > 0 {
             let west_idx = chunk_idx(x - 1, y, z);
             needed_chunks.push(west_idx);
         }
-        
+
         if z < MAP_SIZE.2 - 1 {
             let below_idx = chunk_idx(x, y, z + 1);
             needed_chunks.push(below_idx);
@@ -238,7 +252,7 @@ fn load_nearby_chunks(
             }
         } else if let Some(cur_pos) = cur_dormant_chunks.iter().position(|&i| i == *idx) {
             cur_dormant_chunks.swap_remove(cur_pos);
-            
+
             // chunk is dormant but needs to be active
             if is_active {
                 chunks_to_active.push(*idx);
@@ -255,7 +269,7 @@ fn load_nearby_chunks(
     }
 
     let chunks_to_unload = [cur_active_chunks, cur_dormant_chunks].concat();
-    
+
     for idx in chunks_to_load.iter() {
         e_load_chunk.send(LoadChunkEvent(*idx));
     }

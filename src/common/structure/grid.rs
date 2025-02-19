@@ -2,7 +2,6 @@ use std::slice::Iter;
 
 use serde::{Deserialize, Serialize};
 
-
 // A Column-major 2D grid
 #[allow(dead_code)]
 #[derive(Clone, Deserialize, Serialize)]
@@ -14,7 +13,10 @@ pub struct Grid<T> {
 
 #[allow(dead_code)]
 impl<T> Grid<T> {
-    pub fn init(width: usize, height: usize, value: T) -> Self where T: Clone {
+    pub fn init(width: usize, height: usize, value: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
             data: vec![value; width * height],
             width,
@@ -22,7 +24,10 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn init_fill<F>(width: usize, height: usize, mut fill_fn: F) -> Self where F: FnMut(usize, usize) -> T {
+    pub fn init_fill<F>(width: usize, height: usize, mut fill_fn: F) -> Self
+    where
+        F: FnMut(usize, usize) -> T,
+    {
         let mut data = Vec::with_capacity(width * height);
 
         for x in 0..width {
@@ -38,7 +43,7 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn init_from_vec(width: usize, height: usize, data:Vec<T>) -> Self {
+    pub fn init_from_vec(width: usize, height: usize, data: Vec<T>) -> Self {
         Self {
             data,
             width,
@@ -47,7 +52,7 @@ impl<T> Grid<T> {
     }
 
     #[inline]
-    pub fn xy(&self, idx:usize) -> (usize, usize) {
+    pub fn xy(&self, idx: usize) -> (usize, usize) {
         (idx / self.height, idx % self.height)
     }
 
@@ -82,7 +87,10 @@ impl<T> Grid<T> {
     }
 
     #[inline]
-    pub fn clear(&mut self, value: T) where T: Clone {
+    pub fn clear(&mut self, value: T)
+    where
+        T: Clone,
+    {
         self.data.fill(value);
     }
 
@@ -90,7 +98,10 @@ impl<T> Grid<T> {
         self.data.iter()
     }
 
-    pub fn fill<F>(&mut self, fill_fn: F) where F: Fn(usize, usize) -> T {
+    pub fn fill<F>(&mut self, fill_fn: F)
+    where
+        F: Fn(usize, usize) -> T,
+    {
         for x in 0..self.width {
             for y in 0..self.height {
                 self.set(x, y, fill_fn(x, y));
@@ -98,4 +109,3 @@ impl<T> Grid<T> {
         }
     }
 }
-
