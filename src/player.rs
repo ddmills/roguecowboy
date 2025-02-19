@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use bevy::prelude::*;
 
@@ -80,20 +80,28 @@ pub fn player_input(
 
     let mut position = q_player.single_mut();
 
-    if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1 && keys.pressed(KeyCode::KeyW) && input_rate.try_key(KeyCode::KeyW, now, rate, delay) {
-        position.y += 1;
-    }
-
     if position.x > 0 && keys.pressed(KeyCode::KeyA) && input_rate.try_key(KeyCode::KeyA, now, rate, delay) {
         position.x -= 1;
+    }
+
+    if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1 && keys.pressed(KeyCode::KeyD) && input_rate.try_key(KeyCode::KeyD, now, rate, delay) {
+        position.x += 1;
+    }
+
+    if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1 && keys.pressed(KeyCode::KeyW) && input_rate.try_key(KeyCode::KeyW, now, rate, delay) {
+        position.y += 1;
     }
 
     if position.y > 0 && keys.pressed(KeyCode::KeyS) && input_rate.try_key(KeyCode::KeyS, now, rate, delay) {
         position.y -= 1;
     }
 
-    if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1 && keys.pressed(KeyCode::KeyD) && input_rate.try_key(KeyCode::KeyD, now, rate, delay) {
-        position.x += 1;
+    if position.z > 0 && keys.pressed(KeyCode::KeyE) && input_rate.try_key(KeyCode::KeyE, now, rate, delay) {
+        position.z -= 1;
+    }
+
+    if position.z < MAP_SIZE.2 - 1 && keys.pressed(KeyCode::KeyQ) && input_rate.try_key(KeyCode::KeyQ, now, rate, delay) {
+        position.z += 1;
     }
 
     for key in keys.get_just_released() {

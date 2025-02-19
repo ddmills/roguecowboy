@@ -156,7 +156,7 @@ fn load_nearby_chunks(
                 needed_chunks.push(north_west_idx);
             }
         }
-    
+
         if y > 0 {
             let south_idx = chunk_idx(x, y - 1, z);
             needed_chunks.push(south_idx);
@@ -171,6 +171,11 @@ fn load_nearby_chunks(
                 needed_chunks.push(south_west_idx);
             }
         }
+
+        if z > 0 {
+            let above_idx = chunk_idx(x, y, z - 1);
+            needed_chunks.push(above_idx);
+        }
     
         if x < MAP_SIZE.0 - 1 {
             let east_idx = chunk_idx(x + 1, y, z);
@@ -180,6 +185,11 @@ fn load_nearby_chunks(
         if x > 0 {
             let west_idx = chunk_idx(x - 1, y, z);
             needed_chunks.push(west_idx);
+        }
+        
+        if z < MAP_SIZE.2 - 1 {
+            let below_idx = chunk_idx(x, y, z + 1);
+            needed_chunks.push(below_idx);
         }
     }
 

@@ -61,7 +61,8 @@ pub fn update_glyph_sprites(mut q_changed: Query<(&Glyph, &mut Sprite), Changed<
 
 pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (position, mut transform) in q_changed.iter_mut() {
-        let target = tile_translation(position.x, position.y).extend(position.layer as f32);
+        let z= (10 * position.z + (10 - position.layer)) as f32;
+        let target = tile_translation(position.x, position.y).extend(-z);
         transform.translation = target;
     }
 }
@@ -94,7 +95,7 @@ pub fn on_status_change(
         if *status == ChunkStatus::Active {
             glyph.fg = Color::srgb_u8(255, 255, 255);
         } else {
-            glyph.fg = Color::srgb_u8(35, 37, 37);
+            glyph.fg = Color::srgb_u8(92, 97, 97);
         }
     }
 }

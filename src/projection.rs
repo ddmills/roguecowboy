@@ -1,14 +1,14 @@
-use bevy::log::info;
-
-
 // width, height, depth, in chunks
 pub const MAP_SIZE: (usize, usize, usize) = (8, 6, 4);
 
 // width and height of a chunk, in tiles
-pub const CHUNK_SIZE: (usize, usize) = (4, 3);
+pub const CHUNK_SIZE: (usize, usize) = (12, 8);
 
-// width and height of a tile, in pixels
+// width and height of a tile, in texels
 pub const TILE_SIZE: (usize, usize) = (16, 16);
+
+// size of a texel, in pixels
+pub const TEXEL_SIZE: usize = 2;
 
 pub const Z_LAYER_GROUND: usize = 0;
 pub const Z_LAYER_ACTORS: usize = 1;
