@@ -28,7 +28,7 @@ pub fn camera_follow_player(
     let mut camera = q_camera.single_mut();
     let player = q_player.single();
     let a = fixed_time.overstep_fraction();
-    let speed = 0.05;
+    let speed = 0.1;
 
     let chunk_idx = world_to_chunk_idx(player.x, player.y, player.z);
     let chunk_pos = chunk_xyz(chunk_idx);

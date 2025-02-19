@@ -2,14 +2,16 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::{glyph::{Glyph, Position}, projection::{world_to_chunk_idx, CHUNK_SIZE, MAP_SIZE, Z_LAYER_ACTORS}, world::Chunks, GameState};
+use crate::{glyph::{Glyph, Position}, projection::{CHUNK_SIZE, MAP_SIZE, Z_LAYER_ACTORS}, GameState};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_systems(OnEnter(GameState::Playing), (setup_player).chain())
-            .add_systems(Update, (player_input, on_player_move).run_if(in_state(GameState::Playing)));
+        app
+            .add_event::<PlayerMovedEvent>()
+            .add_systems(OnEnter(GameState::Playing), (setup_player).chain())
+            .add_systems(Update, (player_input).run_if(in_state(GameState::Playing)));
     }
 }
 
@@ -17,7 +19,14 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct Player;
 
-pub fn setup_player(mut cmds: Commands) {
+#[derive(Event)]
+pub struct PlayerMovedEvent {
+    pub x: usize,
+    pub y: usize,
+    pub z: usize,
+}
+
+pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMovedEvent>) {
     cmds.spawn((
         Player,
         Glyph {
@@ -27,6 +36,8 @@ pub fn setup_player(mut cmds: Commands) {
         },
         Position::new(8, 8, 0, Z_LAYER_ACTORS)
     ));
+
+    e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
 }
 
 #[derive(Default)]
@@ -72,57 +83,55 @@ pub fn player_input(
     mut q_player: Query<&mut Position, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
-    mut input_rate: Local<InputRate>
+    mut input_rate: Local<InputRate>,
+    mut e_player_moved: EventWriter<PlayerMovedEvent>
 ) {
     let now = time.elapsed_secs_f64();
     let rate = 0.075;
     let delay = 0.35;
+    let mut moved = false;
 
     let mut position = q_player.single_mut();
 
     if position.x > 0 && keys.pressed(KeyCode::KeyA) && input_rate.try_key(KeyCode::KeyA, now, rate, delay) {
         position.x -= 1;
+        moved = true;
     }
 
     if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1 && keys.pressed(KeyCode::KeyD) && input_rate.try_key(KeyCode::KeyD, now, rate, delay) {
         position.x += 1;
+        moved = true;
     }
 
     if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1 && keys.pressed(KeyCode::KeyW) && input_rate.try_key(KeyCode::KeyW, now, rate, delay) {
         position.y += 1;
+        moved = true;
     }
 
     if position.y > 0 && keys.pressed(KeyCode::KeyS) && input_rate.try_key(KeyCode::KeyS, now, rate, delay) {
         position.y -= 1;
+        moved = true;
     }
 
     if position.z > 0 && keys.pressed(KeyCode::KeyE) && input_rate.try_key(KeyCode::KeyE, now, rate, delay) {
         position.z -= 1;
+        moved = true;
     }
 
     if position.z < MAP_SIZE.2 - 1 && keys.pressed(KeyCode::KeyQ) && input_rate.try_key(KeyCode::KeyQ, now, rate, delay) {
         position.z += 1;
+        moved = true;
     }
 
     for key in keys.get_just_released() {
         input_rate.keys.remove(key);
     }
-}
 
-
-// check when player moves to a different chunk and set it as active
-pub fn on_player_move(
-    q_player: Query<&Position, With<Player>>,
-    mut chunks: ResMut<Chunks>
-) {
-    let player = q_player.single();
-    let player_chunk_idx = world_to_chunk_idx(player.x, player.y, player.z);
-
-    // if !chunks.active.contains(&player_chunk_idx) {
-    if player_chunk_idx == 0 {
-        chunks.active = vec![0];
-    } else {
-        chunks.active = vec![0, player_chunk_idx];
+    if moved {
+        e_player_moved.send(PlayerMovedEvent {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+        });
     }
-    // }
 }

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::{Grid, Grid3d}, projection::{chunk_idx, chunk_xyz, MAP_SIZE}, GameState};
+use crate::{common::{Grid, Grid3d}, glyph::Position, player::Player, projection::{chunk_idx, chunk_xyz, MAP_SIZE}, GameState};
 
-use super::{on_load_chunk, on_set_chunk_status, on_spawn_chunk, on_unload_chunk, LoadChunkEvent, SetChunkStatusEvent, SpawnChunkEvent, UnloadChunkEvent};
+use super::{on_load_chunk, on_player_move, on_set_chunk_status, on_spawn_chunk, on_unload_chunk, LoadChunkEvent, SetChunkStatusEvent, SpawnChunkEvent, UnloadChunkEvent};
 
 pub struct MapPlugin;
 
@@ -16,11 +16,13 @@ impl Plugin for MapPlugin {
             .add_event::<SetChunkStatusEvent>()
             .add_event::<SpawnChunkEvent>()
             .add_systems(Update, (
+                on_player_move,
                 load_nearby_chunks,
                 on_load_chunk,
                 on_unload_chunk,
                 on_spawn_chunk,
                 on_set_chunk_status,
+                chunk_visibility,
             ).chain().run_if(in_state(GameState::Playing)));
     }
 }
@@ -48,7 +50,6 @@ pub enum ChunkStatus {
 #[derive(Resource, Default)]
 pub struct Chunks {
     pub active: Vec<usize>,
-    pub dormant: Vec<usize>,
 }
 
 #[derive(Clone, Component)]
@@ -67,6 +68,7 @@ impl Chunk {
         }
     }
 
+    #[inline]
     pub fn to_save(&self) -> ChunkSave {
         ChunkSave {
             idx: self.idx,
@@ -74,14 +76,17 @@ impl Chunk {
         }
     }
 
+    #[inline]
     pub fn set_terrain(&mut self, x: usize, y: usize, terrain: Terrain) {
         self.terrain.set(x, y, terrain);
     }
 
+    #[inline]
     pub fn get_terrain(&self, x: usize, y: usize) -> Option<&Terrain> {
         self.terrain.get(x, y)
     }
 
+    #[inline]
     pub fn idx(&self) -> usize {
         self.idx
     }
@@ -108,6 +113,27 @@ impl Terrain {
         match self {
             Terrain::Grass => 0,
             Terrain::Dirt => 1,
+        }
+    }
+}
+
+fn chunk_visibility(
+    mut cmds: Commands,
+    q_player: Query<&Position, With<Player>>,
+    q_chunks: Query<(Entity, &Chunk)>,
+) {
+    let Ok(player) = q_player.get_single() else {
+        return;
+    };
+
+    for (chunk_e, chunk) in q_chunks.iter() {
+        let chunk_pos = chunk_xyz(chunk.idx);
+
+        // compare Z levels
+        if chunk_pos.2 != player.z {
+            cmds.entity(chunk_e).insert(Visibility::Hidden);
+        } else {
+            cmds.entity(chunk_e).insert(Visibility::Visible);
         }
     }
 }

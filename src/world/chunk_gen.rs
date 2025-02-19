@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{common::{Grid, Rand}, glyph::{Glyph, Position}, projection::{chunk_local_to_world, CHUNK_SIZE, Z_LAYER_GROUND}, save::{save_chunk, try_load_chunk}};
+use crate::{common::{Grid, Rand}, glyph::{Glyph, Position}, player::{Player, PlayerMovedEvent}, projection::{chunk_local_to_world, chunk_xyz, world_to_chunk_idx, CHUNK_SIZE, Z_LAYER_GROUND}, save::{save_chunk, try_load_chunk}};
 
-use super::{Chunk, ChunkSave, ChunkStatus, Terrain};
+use super::{Chunk, ChunkSave, ChunkStatus, Chunks, Terrain};
 
 #[derive(Event)]
 pub struct LoadChunkEvent(pub usize);
@@ -67,8 +67,8 @@ pub fn on_spawn_chunk(mut e_spawn_chunk: EventReader<SpawnChunkEvent>, mut cmds:
         let chunk_e = cmds.spawn((
             Name::new(format!("chunk-{}", e.data.idx)),
             Transform::default(),
-            Visibility::Visible,
-            ChunkStatus::Dormant, // todo: get from CHunks?
+            Visibility::Hidden,
+            ChunkStatus::Dormant,
         )).id();
 
         let mut tiles = vec![];
@@ -99,16 +99,37 @@ pub fn on_spawn_chunk(mut e_spawn_chunk: EventReader<SpawnChunkEvent>, mut cmds:
     }
 }
 
-pub fn on_set_chunk_status(mut e_set_chunk_status: EventReader<SetChunkStatusEvent>, mut cmds: Commands, q_chunks: Query<(Entity, &Chunk)>)
+pub fn on_set_chunk_status(mut e_set_chunk_status: EventReader<SetChunkStatusEvent>, mut cmds: Commands, q_chunks: Query<(Entity, &Chunk)>, q_player: Query<&Position, With<Player>>)
 {
-    for e in e_set_chunk_status.read() {
+    for e in e_set_chunk_status.read() {        
         let Some((chunk_e, chunk)) = q_chunks.iter().find(|(en, c)| c.idx() == e.idx) else {
             continue;
         };
 
+        let Ok(player) = q_player.get_single() else {
+            continue;
+        };
+
         cmds.entity(chunk_e).insert(e.status);
+
         for tile in chunk.tiles.iter() {
             cmds.entity(*tile).insert(e.status);
+        }
+    }
+}
+
+// check when player moves to a different chunk and set it as active
+pub fn on_player_move(
+    mut e_player_moved: EventReader<PlayerMovedEvent>,
+    // q_player: Query<&Position, With<Player>>,
+    mut chunks: ResMut<Chunks>
+) {
+    for e in e_player_moved.read() {
+        // let player = q_player.single();
+        let player_chunk_idx = world_to_chunk_idx(e.x, e.y, e.z);
+        
+        if !chunks.active.contains(&player_chunk_idx) {
+            chunks.active = vec![player_chunk_idx];
         }
     }
 }
