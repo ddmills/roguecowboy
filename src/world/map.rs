@@ -2,11 +2,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    GameState,
-    common::{Grid, Grid3d},
-    glyph::Position,
-    player::Player,
-    projection::{MAP_SIZE, chunk_idx, chunk_xyz},
+    common::{Grid, Grid3d, Rand}, glyph::Position, player::Player, projection::{chunk_idx, chunk_xyz, CHUNK_SIZE, MAP_SIZE}, GameState
 };
 
 use super::{
@@ -50,6 +46,83 @@ impl Default for Map {
     fn default() -> Self {
         let chunks = Grid3d::init(MAP_SIZE.0, MAP_SIZE.1, MAP_SIZE.2, OverworldChunk);
         Self { chunks }
+    }
+}
+
+pub struct EdgeConstraints {
+    pub south: Vec<u8>,
+    pub west: Vec<u8>,
+}
+
+pub struct ChunkConstraints {
+    pub south: Vec<u8>,
+    pub west: Vec<u8>,
+    pub east: Vec<u8>,
+    pub north: Vec<u8>,
+}
+
+impl Map {
+    fn get_edge_constraints(&self, x: usize, y: usize, z: usize) -> EdgeConstraints {
+        if self.chunks.is_oob(x, y, z) {
+            return EdgeConstraints {
+                south: vec![],
+                west: vec![],
+            }
+        }
+
+        let idx = chunk_idx(x, y, z);
+        let mut rand = Rand::seed(idx as u64);
+
+        let mut south = [0; CHUNK_SIZE.0 - 1];
+        let mut west = [0; CHUNK_SIZE.1 - 1];
+
+        if y > 0 {
+            // river
+            if x % 3 == 0 {
+                let r = rand.range_n(1, CHUNK_SIZE.0 as i32 - 1) as usize;
+                south[r] = 1;
+            }
+            
+            // path
+            if x % 4 == 0 {
+                let r = rand.range_n(1, CHUNK_SIZE.0 as i32 - 1) as usize;
+                south[r] = 2;
+            }
+        }
+
+        if x > 0 {
+            // river
+            if y % 2 == 0 {
+                let r = rand.range_n(1, CHUNK_SIZE.1 as i32 - 1) as usize;
+                west[r] = 1;
+            }
+
+            // footpaths
+            if y % 2 == 0 {
+                let r = rand.range_n(1, CHUNK_SIZE.1 as i32 - 1) as usize;
+                west[r] = 2;
+            }
+        }
+
+        EdgeConstraints {
+            south: south.to_vec(),
+            west: west.to_vec(),
+        }
+    }
+
+    pub fn get_chunk_constraints(&self, idx: usize) -> ChunkConstraints {
+        let (x, y, z) = chunk_xyz(idx);
+        let own = self.get_edge_constraints(x, y, z);
+
+        let east = self.get_edge_constraints(x + 1, y, z);
+        let north = self.get_edge_constraints(x, y + 1, z);
+
+        ChunkConstraints {
+            north: north.south,
+            west: own.west,
+            south: own.south,
+            east: east.west,
+        }
     }
 }
 
@@ -118,6 +191,8 @@ pub enum Terrain {
     #[default]
     Grass,
     Dirt,
+    River,
+    Footpath,
 }
 
 impl Terrain {
@@ -125,6 +200,8 @@ impl Terrain {
         match self {
             Terrain::Grass => 0,
             Terrain::Dirt => 1,
+            Terrain::River => 3,
+            Terrain::Footpath => 4,
         }
     }
 }

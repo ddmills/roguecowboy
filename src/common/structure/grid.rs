@@ -108,4 +108,12 @@ impl<T> Grid<T> {
             }
         }
     }
+
+    pub fn is_oob(&self, x: usize, y: usize) -> bool {
+        x > 0 && y > 0 && x < self.width && y < self.height
+    }
+
+    pub fn is_on_edge(&self, x: usize, y: usize) -> bool {
+        x == 0 || x == self.width - 1 || y == 0 || y == self.height - 1
+    }
 }

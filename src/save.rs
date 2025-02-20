@@ -11,6 +11,8 @@ use bevy::{
 use crate::world::ChunkSave;
 
 pub fn save_chunk(chunk: &ChunkSave) {
+    return;
+
     let Ok(save_data) = ron::to_string(chunk) else {
         error!("could not save chunk!");
         return;

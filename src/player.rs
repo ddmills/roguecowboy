@@ -95,7 +95,7 @@ pub fn player_input(
     mut e_player_moved: EventWriter<PlayerMovedEvent>,
 ) {
     let now = time.elapsed_secs_f64();
-    let rate = 0.075;
+    let rate = 0.035;
     let delay = 0.35;
     let mut moved = false;
 

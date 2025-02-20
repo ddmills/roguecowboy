@@ -1,10 +1,9 @@
 use bevy::{math::vec3, prelude::*};
 
 use crate::{
-    GameState,
-    glyph::Position,
-    player::Player,
-    projection::{CHUNK_SIZE, TEXEL_SIZE, TILE_SIZE, chunk_xyz, world_to_chunk_idx},
+    glyph::Position, player::Player, projection::{
+        chunk_xyz, world_to_chunk_idx, CHUNK_SIZE, CHUNK_SIZE_F32, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32
+    }, GameState
 };
 
 pub struct CameraPlugin;
@@ -24,7 +23,7 @@ impl Plugin for CameraPlugin {
 
 fn setup_camera(mut cmds: Commands) {
     let mut projection = OrthographicProjection::default_2d();
-    projection.scale = 1. / (TEXEL_SIZE as f32);
+    projection.scale = 1. / TEXEL_SIZE_F32;
     cmds.spawn((Camera2d, MainCamera, projection));
 }
 
@@ -42,11 +41,11 @@ pub fn camera_follow_player(
     let chunk_pos = chunk_xyz(chunk_idx);
     let center_of_chunk = (
         (chunk_pos.0 * CHUNK_SIZE.0 * TILE_SIZE.0) as f32
-            + ((CHUNK_SIZE.0 * TILE_SIZE.0) as f32 / 2.)
-            - (TILE_SIZE.0 as f32 / 2.),
+            + ((CHUNK_SIZE_F32.0 * TILE_SIZE_F32.0) / 2.)
+            - (TILE_SIZE_F32.0 / 2.),
         (chunk_pos.1 * CHUNK_SIZE.1 * TILE_SIZE.1) as f32
-            + ((CHUNK_SIZE.1 * TILE_SIZE.1) as f32 / 2.)
-            - (TILE_SIZE.1 as f32 / 2.),
+            + ((CHUNK_SIZE_F32.1 * TILE_SIZE_F32.1) / 2.)
+            - (TILE_SIZE_F32.1 / 2.),
     );
 
     let new_pos = vec3(center_of_chunk.0 as f32, center_of_chunk.1 as f32, 0.);

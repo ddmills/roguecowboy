@@ -1,14 +1,18 @@
 // width, height, depth, in chunks
 pub const MAP_SIZE: (usize, usize, usize) = (8, 6, 4);
+pub const MAP_SIZE_F32: (f32, f32, f32) = (MAP_SIZE.0 as f32, MAP_SIZE.1 as f32, MAP_SIZE.2 as f32);
 
 // width and height of a chunk, in tiles
-pub const CHUNK_SIZE: (usize, usize) = (12, 8);
+pub const CHUNK_SIZE: (usize, usize) = (24, 16);
+pub const CHUNK_SIZE_F32: (f32, f32) = (CHUNK_SIZE.0 as f32, CHUNK_SIZE.1 as f32);
 
 // width and height of a tile, in texels
 pub const TILE_SIZE: (usize, usize) = (16, 16);
+pub const TILE_SIZE_F32: (f32, f32) = (TILE_SIZE.0 as f32, TILE_SIZE.1 as f32);
 
 // size of a texel, in pixels
 pub const TEXEL_SIZE: usize = 2;
+pub const TEXEL_SIZE_F32: f32 = TEXEL_SIZE as f32;
 
 pub const Z_LAYER_GROUND: usize = 0;
 pub const Z_LAYER_ACTORS: usize = 1;

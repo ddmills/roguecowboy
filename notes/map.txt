@@ -1,0 +1,58 @@
+Overworld map generation features
+1. Points of interest (POI's)
+2. Biomes
+3. Rivers, Roads, Railroads
+4. Bridges
+5. Temperature
+6. Faction ownership
+7. Continuity across zones
+8. Connectivity for roads/etc
+9. uniqueness in zones
+10. zones can have multi-z level structures (tall buildings, basements)
+
+Underground can have rivers, mine carts, railroads, etc.
+
+Each chunk should track:
+
+- Biome on south-western corner
+- southern edge connectsion
+- western edge connections
+- southern edge tiles
+- western edge tiles
+- stairs going _down_ (?)
+
+For example, if this is a chunk:
+
++-    -    -    -    -    -    -+
+1                               .
+0                               .
+p              s                .
+0                               .
+1                               .
+0                               .
+M00111011010p1110010001001r00110+
+
+
+M = Mountain Biome
+r = a railroad connection
+p = a footpath connection
+s = a down stair
+0 = open
+1 = blocked
+
+
+We track the _corner_ so we can make the transitions smoother.
+I.e, if the Western side is desert, and the easter side is mountain,
+we know that this chunk needs to smoothly transition between the two.
+If all four corners are the same (all desert), then we know this chunk
+is entirely desert, and no transition is needed.
+
+To generate the chunk, we must know the following data:
+
+1. the edge position of every river/road/railroad
+2. the biome of every corner
+3. any stairs going _down_
+4. any stairs going _up_
+5. the point of interest type 
+6. the faction in every corner.
+
