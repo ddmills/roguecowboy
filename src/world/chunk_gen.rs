@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    common::{astar, AStarSettings, Distance, Grid, Rand},
+    common::{astar, AStarSettings, Distance, Grid, Perlin, Rand},
     glyph::{Glyph, Position},
     player::{Player, PlayerMovedEvent},
     projection::{chunk_local_to_world, world_to_chunk_idx, CHUNK_SIZE, Z_LAYER_GROUND},
@@ -39,6 +39,10 @@ pub fn on_load_chunk(
             e_spawn_chunk.send(SpawnChunkEvent { data: save_data });
             continue;
         };
+
+        let nz = Perlin::new(*chunk_idx as u32, 0.01, 6, 2.12);
+
+        // todo: snapshots
 
         let constraints = map.get_chunk_constraints(*chunk_idx);
 
