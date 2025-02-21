@@ -175,7 +175,7 @@ impl Zone {
 pub struct OverworldZone;
 
 #[repr(u8)]
-#[derive(Clone, Copy, Default, Deserialize, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Terrain {
     #[default]
     Grass = 1,

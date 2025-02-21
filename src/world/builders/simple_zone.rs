@@ -1,8 +1,8 @@
 use bevy::log::info;
 
-use crate::{common::{astar, AStarSettings, Distance, Grid, Rand}, projection::ZONE_SIZE, world::Terrain};
+use crate::{common::{astar, AStarSettings, Distance, Grid, Perlin, Rand}, projection::ZONE_SIZE, world::Terrain};
 
-use super::{edge_snapshot, terrain_snapshot, ZoneBuilder, ZoneConstraints, ZoneData, ZoneSnapshot, ENABLE_ZONE_SNAPSHOTS};
+use super::{edge_gradient_buffer, edge_snapshot, grayscale_snapshot, terrain_snapshot, ZoneBuilder, ZoneConstraints, ZoneData, ZoneSnapshot, ENABLE_ZONE_SNAPSHOTS};
 
 #[derive(Default)]
 pub struct SimpleZoneBuilder {
@@ -67,7 +67,30 @@ impl ZoneBuilder for SimpleZoneBuilder {
             rivers.push((ZONE_SIZE.0 / 2, ZONE_SIZE.1 / 2));
         }
 
-        // every river should attempt to connect to every other river
+        let mut nz = Perlin::new(idx as u32, 0.1, 2, 2.);
+        let mut h = vec![];
+
+        for x in 0..ZONE_SIZE.0 {
+            for y in 0..ZONE_SIZE.1 {
+                let v = nz.get(x as f32, y as f32);
+                h.push(v * v);
+            }
+        }
+
+        let height = Grid::init_from_vec(ZONE_SIZE.0, ZONE_SIZE.1, h);
+
+        if ENABLE_ZONE_SNAPSHOTS {
+            self.snapshots.push(grayscale_snapshot(&height));
+        }
+
+        let edge_buffer = edge_gradient_buffer(5);
+
+        if ENABLE_ZONE_SNAPSHOTS {
+            self.snapshots.push(grayscale_snapshot(&edge_buffer));
+        }
+
+        // every river should attempt to connect to every other river,
+        // and also follow low ground
         for (p1_idx, p1) in rivers.iter().enumerate() {
             (p1_idx..rivers.len()).for_each(|p2_idx| {
                 let p2 = rivers[p2_idx];
@@ -90,15 +113,15 @@ impl ZoneBuilder for SimpleZoneBuilder {
                         p[0] == p2.0 && p[1] == p2.1
                     },
                     cost: |a, b| {
-                        let dist = Distance::diagonal([a[0] as i32, a[1] as i32, a[2] as i32], [b[0] as i32, b[1] as i32, b[2] as i32]);
                         let t = terrain.get(b[0], b[1]).unwrap();
+                        let h = height.get(b[0], b[1]).unwrap();
+                        let edge = edge_buffer.get(b[0], b[1]).unwrap();
 
-                        dist * match t {
-                            Terrain::Grass => 15.,
-                            Terrain::Dirt => 15.,
-                            Terrain::River => 1.,
-                            Terrain::Footpath => 10.,
+                        if *t == Terrain::River {
+                            return 1.;
                         }
+
+                        5. + h * h * 100. + edge * 200.
                     },
                     heuristic: |v| {
                         Distance::diagonal([v[0] as i32, v[1] as i32, v[2] as i32], [p2.0 as i32, p2.1 as i32, 0])
@@ -165,15 +188,24 @@ impl ZoneBuilder for SimpleZoneBuilder {
                         p[0] == p2.0 && p[1] == p2.1
                     },
                     cost: |a, b| {
-                        let dist = Distance::diagonal([a[0] as i32, a[1] as i32, a[2] as i32], [b[0] as i32, b[1] as i32, b[2] as i32]);
                         let t = terrain.get(b[0], b[1]).unwrap();
+                        let h = 1. - height.get(b[0], b[1]).unwrap();
+                        let edge = edge_buffer.get(b[0], b[1]).unwrap();
 
-                        dist * match t {
-                            Terrain::Grass => 5.,
-                            Terrain::Dirt => 5.,
-                            Terrain::River => 100.,
-                            Terrain::Footpath => 1.,
+                        if *t == Terrain::Footpath {
+                            return 1.;
                         }
+
+                        if *t == Terrain::River {
+                            // try to cross at right angles for rivers
+                            if a[0] != b[0] && a[1] != b[1] {
+                                return 5000.;
+                            }
+
+                            return 600.;
+                        }
+
+                        1. + (h * h * h * 400.) + (edge * edge * 500.)
                     },
                     heuristic: |v| {
                         Distance::diagonal([v[0] as i32, v[1] as i32, v[2] as i32], [p2.0 as i32, p2.1 as i32, 0])

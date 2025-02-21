@@ -116,4 +116,25 @@ impl<T> Grid<T> {
     pub fn is_on_edge(&self, x: usize, y: usize) -> bool {
         x == 0 || x == self.width - 1 || y == 0 || y == self.height - 1
     }
+
+    // map from one grid of values to a new grid, of the same size
+    pub fn map<F, V>(&self, mut map_fn: F) -> Grid<V>
+    where
+        F: FnMut(usize, usize, &T) -> V,
+    {
+        let mut data = Vec::with_capacity(self.width * self.height);
+
+        for x in 0..self.width {
+            for y in 0..self.height {
+                let v = self.get(x, y).unwrap();
+                data.push(map_fn(x, y, v));
+            }
+        }
+
+        Grid {
+            data,
+            width: self.width,
+            height: self.height,
+        }
+    }
 }

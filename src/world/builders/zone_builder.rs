@@ -3,18 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Grid, world::Terrain};
 
-pub const ENABLE_ZONE_SNAPSHOTS: bool = true;
+pub const ENABLE_ZONE_SNAPSHOTS: bool = false;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ZoneData {
     pub idx: usize,
     pub terrain: Grid<Terrain>,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum SnapshotScheme {
-    Edges,
-    Terrain,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -71,7 +65,6 @@ impl TileSnapColor {
 
 #[derive(Clone)]
 pub struct ZoneSnapshot {
-    pub scheme: SnapshotScheme,
     pub data: Grid<TileSnapColor>,
 }
 

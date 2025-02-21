@@ -3,7 +3,7 @@ pub const MAP_SIZE: (usize, usize, usize) = (8, 6, 4);
 pub const MAP_SIZE_F32: (f32, f32, f32) = (MAP_SIZE.0 as f32, MAP_SIZE.1 as f32, MAP_SIZE.2 as f32);
 
 // width and height of a zone, in tiles
-pub const ZONE_SIZE: (usize, usize) = (24, 16);
+pub const ZONE_SIZE: (usize, usize) = (32, 24);
 pub const ZONE_SIZE_F32: (f32, f32) = (ZONE_SIZE.0 as f32, ZONE_SIZE.1 as f32);
 
 // width and height of a tile, in texels
