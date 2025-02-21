@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 // A Column-major 2D grid
 #[allow(dead_code)]
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Default, Clone, Deserialize, Serialize)]
 pub struct Grid<T> {
     data: Vec<T>,
     width: usize,

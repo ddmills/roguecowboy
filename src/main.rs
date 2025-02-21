@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use camera::CameraPlugin;
 use glyph::{GlyphPlugin, Tileset, setup_tileset};
 use player::PlayerPlugin;
-use world::MapPlugin;
+use world::{MapPlugin, ZoneSnapshotPlugin};
 
 mod camera;
 mod common;
@@ -17,6 +17,7 @@ pub enum GameState {
     #[default]
     Loading,
     Playing,
+    Snapshot,
 }
 
 pub fn go_to_state(state: GameState) -> impl Fn(ResMut<NextState<GameState>>) {
@@ -29,6 +30,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugins(CameraPlugin)
+        .add_plugins(ZoneSnapshotPlugin)
         .add_plugins(MapPlugin)
         .add_plugins(GlyphPlugin)
         .add_plugins(PlayerPlugin)

@@ -8,17 +8,21 @@ use bevy::{
     tasks::IoTaskPool,
 };
 
-use crate::world::ChunkSave;
+use crate::world::ZoneData;
 
-pub fn save_chunk(chunk: &ChunkSave) {
-    return;
+pub const ENABLE_SAVES: bool = false;
 
-    let Ok(save_data) = ron::to_string(chunk) else {
-        error!("could not save chunk!");
+pub fn save_zone(zone: &ZoneData) {
+    if !ENABLE_SAVES {
+        return;
+    }
+
+    let Ok(save_data) = ron::to_string(zone) else {
+        error!("could not save zone!");
         return;
     };
 
-    let file_path = format!("saves/chunk-{}.ron", chunk.idx);
+    let file_path = format!("saves/zone-{}.ron", zone.idx);
     debug!("saving {}", file_path);
     store(file_path, save_data);
 }
@@ -42,19 +46,23 @@ fn store(file_path: String, data: String) -> Option<()> {
     storage.set_item(&file_path, &data).ok()
 }
 
-pub fn try_load_chunk(chunk_idx: usize) -> Option<ChunkSave> {
-    let file_path = format!("saves/chunk-{}.ron", chunk_idx);
+pub fn try_load_zone(zone_idx: usize) -> Option<ZoneData> {
+    if !ENABLE_SAVES {
+        return None;
+    }
+
+    let file_path = format!("saves/zone-{}.ron", zone_idx);
 
     debug!("loading {}", file_path);
 
     let contents = read(&file_path)?;
 
-    let Ok(chunk) = ron::from_str::<ChunkSave>(&contents) else {
-        warn!("Could not deserialize chunk save! corrupt? {}", file_path);
+    let Ok(zone) = ron::from_str::<ZoneData>(&contents) else {
+        warn!("Could not deserialize zone save! corrupt? {}", file_path);
         return None;
     };
 
-    Some(chunk)
+    Some(zone)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

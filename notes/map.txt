@@ -12,7 +12,7 @@ Overworld map generation features
 
 Underground can have rivers, mine carts, railroads, etc.
 
-Each chunk should track:
+Each zone should track:
 
 - Biome on south-western corner
 - southern edge connectsion
@@ -21,7 +21,7 @@ Each chunk should track:
 - western edge tiles
 - stairs going _down_ (?)
 
-For example, if this is a chunk:
+For example, if this is a zone:
 
 +-    -    -    -    -    -    -+
 1                               .
@@ -43,11 +43,11 @@ s = a down stair
 
 We track the _corner_ so we can make the transitions smoother.
 I.e, if the Western side is desert, and the easter side is mountain,
-we know that this chunk needs to smoothly transition between the two.
-If all four corners are the same (all desert), then we know this chunk
+we know that this zone needs to smoothly transition between the two.
+If all four corners are the same (all desert), then we know this zone
 is entirely desert, and no transition is needed.
 
-To generate the chunk, we must know the following data:
+To generate the zone, we must know the following data:
 
 1. the edge position of every river/road/railroad
 2. the biome of every corner

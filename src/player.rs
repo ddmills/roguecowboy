@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::{
     GameState,
     glyph::{Glyph, Position},
-    projection::{CHUNK_SIZE, MAP_SIZE, Z_LAYER_ACTORS},
+    projection::{ZONE_SIZE, MAP_SIZE, Z_LAYER_ACTORS},
 };
 
 pub struct PlayerPlugin;
@@ -13,7 +13,7 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app.add_event::<PlayerMovedEvent>()
-            .add_systems(OnEnter(GameState::Playing), (setup_player).chain())
+            .add_systems(Startup, (setup_player).chain())
             .add_systems(Update, (player_input).run_if(in_state(GameState::Playing)));
     }
 }
@@ -34,7 +34,6 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
         Glyph {
             idx: 2,
             fg: Color::srgb_u8(255, 0, 0),
-            bg: Color::srgb_u8(0, 0, 255),
         },
         Position::new(8, 8, 0, Z_LAYER_ACTORS),
     ));
@@ -109,7 +108,7 @@ pub fn player_input(
         moved = true;
     }
 
-    if position.x < (MAP_SIZE.0 * CHUNK_SIZE.0) - 1
+    if position.x < (MAP_SIZE.0 * ZONE_SIZE.0) - 1
         && keys.pressed(KeyCode::KeyD)
         && input_rate.try_key(KeyCode::KeyD, now, rate, delay)
     {
@@ -117,7 +116,7 @@ pub fn player_input(
         moved = true;
     }
 
-    if position.y < (MAP_SIZE.1 * CHUNK_SIZE.1) - 1
+    if position.y < (MAP_SIZE.1 * ZONE_SIZE.1) - 1
         && keys.pressed(KeyCode::KeyW)
         && input_rate.try_key(KeyCode::KeyW, now, rate, delay)
     {
@@ -160,4 +159,5 @@ pub fn player_input(
             z: position.z,
         });
     }
+
 }

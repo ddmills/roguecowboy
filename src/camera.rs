@@ -2,7 +2,7 @@ use bevy::{math::vec3, prelude::*};
 
 use crate::{
     glyph::Position, player::Player, projection::{
-        chunk_xyz, world_to_chunk_idx, CHUNK_SIZE, CHUNK_SIZE_F32, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32
+        world_to_zone_idx, zone_transform_center, zone_xyz, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32, ZONE_SIZE, ZONE_SIZE_F32
     }, GameState
 };
 
@@ -37,18 +37,9 @@ pub fn camera_follow_player(
     let a = fixed_time.overstep_fraction();
     let speed = 0.1;
 
-    let chunk_idx = world_to_chunk_idx(player.x, player.y, player.z);
-    let chunk_pos = chunk_xyz(chunk_idx);
-    let center_of_chunk = (
-        (chunk_pos.0 * CHUNK_SIZE.0 * TILE_SIZE.0) as f32
-            + ((CHUNK_SIZE_F32.0 * TILE_SIZE_F32.0) / 2.)
-            - (TILE_SIZE_F32.0 / 2.),
-        (chunk_pos.1 * CHUNK_SIZE.1 * TILE_SIZE.1) as f32
-            + ((CHUNK_SIZE_F32.1 * TILE_SIZE_F32.1) / 2.)
-            - (TILE_SIZE_F32.1 / 2.),
-    );
-
-    let new_pos = vec3(center_of_chunk.0 as f32, center_of_chunk.1 as f32, 0.);
+    let zone_idx = world_to_zone_idx(player.x, player.y, player.z);
+    let center_of_zone = zone_transform_center(zone_idx);
+    let new_pos = vec3(center_of_zone.0, center_of_zone.1, 0.);
     let target = camera.translation.lerp(new_pos, a * speed);
 
     camera.translation = target;

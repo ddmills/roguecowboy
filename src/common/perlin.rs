@@ -1,10 +1,12 @@
 use noise::{Clamp, Fbm, MultiFractal, NoiseFn};
 
+#[allow(dead_code)]
 pub struct Perlin {
     nz: Clamp<f64, Fbm<noise::Perlin>, 2>,
     seed: u32,
 }
 
+#[allow(dead_code)]
 impl Perlin {
     pub fn new(seed: u32, frequency: f64, octaves: usize, lacunarity: f64) -> Self {
         let fbm = noise::Fbm::<noise::Perlin>::new(seed)

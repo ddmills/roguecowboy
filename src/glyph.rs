@@ -3,7 +3,7 @@ use bevy::{math::vec2, prelude::*};
 use crate::{
     GameState,
     projection::{TILE_SIZE, world_to_px},
-    world::ChunkStatus,
+    world::ZoneStatus,
 };
 
 pub struct GlyphPlugin;
@@ -13,7 +13,6 @@ impl Plugin for GlyphPlugin {
         app.add_systems(
             Update,
             (update_glyph_sprites, update_positions, on_status_change)
-                .run_if(in_state(GameState::Playing)),
         );
     }
 }
@@ -23,7 +22,6 @@ impl Plugin for GlyphPlugin {
 pub struct Glyph {
     pub idx: usize,
     pub fg: Color,
-    pub bg: Color,
 }
 
 #[derive(Component)]
@@ -90,9 +88,9 @@ pub fn setup_tileset(
     ));
 }
 
-pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ChunkStatus), Changed<ChunkStatus>>) {
+pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ZoneStatus), Changed<ZoneStatus>>) {
     for (mut glyph, status) in q_changed.iter_mut() {
-        if *status == ChunkStatus::Active {
+        if *status == ZoneStatus::Active {
             glyph.fg = Color::srgb_u8(255, 255, 255);
         } else {
             glyph.fg = Color::srgb_u8(92, 97, 97);
