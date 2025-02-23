@@ -12,7 +12,7 @@ impl Plugin for GlyphPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (update_glyph_sprites, update_positions, on_status_change)
+            (update_glyph_sprites, update_positions, on_status_change),
         );
     }
 }
@@ -78,7 +78,7 @@ pub fn setup_tileset(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut tileset: ResMut<Tileset>,
 ) {
-    tileset.texture = asset_server.load("tileset.png");
+    tileset.texture = asset_server.load("tileset_2.png");
     tileset.layout = texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
         UVec2::new(TILE_SIZE.0 as u32, TILE_SIZE.1 as u32),
         8,
@@ -93,7 +93,7 @@ pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ZoneStatus), Changed<
         if *status == ZoneStatus::Active {
             glyph.fg = Color::srgb_u8(255, 255, 255);
         } else {
-            glyph.fg = Color::srgb_u8(92, 97, 97);
+            glyph.fg = Color::srgb_u8(136, 143, 143);
         }
     }
 }

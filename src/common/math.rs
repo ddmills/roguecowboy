@@ -37,11 +37,7 @@ pub fn sig_num(v: f32) -> i32 {
 
 #[allow(dead_code)]
 pub fn min_max(a: u32, b: u32) -> [u32; 2] {
-    if a > b {
-        [b, a]
-    } else {
-        [a, b]
-    }
+    if a > b { [b, a] } else { [a, b] }
 }
 
 #[allow(dead_code)]
@@ -67,4 +63,9 @@ where
         return [a, c, b];
     }
     [a, b, c]
+}
+
+// remap a number v that is between 0-1 to be between min and max
+pub fn remap(v: f32, min: f32, max: f32) -> f32 {
+    (v * (max - min)) + min
 }

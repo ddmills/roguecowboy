@@ -1,6 +1,15 @@
 use bevy::{math::vec3, prelude::*};
 
-use crate::{camera::MainCamera, common::Grid, glyph::{Glyph, Position}, projection::{zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_GROUND, Z_LAYER_SNAPSHOT}, GameState};
+use crate::{
+    GameState,
+    camera::{CursorPosition, MainCamera},
+    common::Grid,
+    glyph::{Glyph, Position},
+    projection::{
+        Z_LAYER_GROUND, Z_LAYER_SNAPSHOT, ZONE_SIZE, is_in_bounds, world_to_zone_local,
+        zone_local_to_world, zone_transform_center,
+    },
+};
 
 use super::{ZoneSnapshot, Zones};
 
@@ -11,9 +20,14 @@ impl Plugin for ZoneSnapshotPlugin {
         app.add_event::<ZoneSnapshotsEvent>()
             .add_event::<UpdateSnapshotTilesEvent>()
             .init_resource::<SnapshotMode>()
+            .add_systems(OnEnter(GameState::Snapshot), enter_snapshot_mode)
             .add_systems(Update, on_zone_snapshot_event)
-            .add_systems(Update, (snapshot_controls, on_update_snapshot_tiles).chain().run_if(in_state(GameState::Snapshot)))
-            .add_systems(OnEnter(GameState::Snapshot), enter_snapshot_mode);
+            .add_systems(
+                Update,
+                (snapshot_controls, on_update_snapshot_tiles, snapshot_cursor)
+                    .chain()
+                    .run_if(in_state(GameState::Snapshot)),
+            );
     }
 }
 
@@ -48,7 +62,7 @@ pub fn on_zone_snapshot_event(
     mut e_zone_snapshots: EventReader<ZoneSnapshotsEvent>,
     mut mode: ResMut<SnapshotMode>,
     zones: Res<Zones>,
-    mut next_game_state: ResMut<NextState<GameState>>
+    mut next_game_state: ResMut<NextState<GameState>>,
 ) {
     for e in e_zone_snapshots.read() {
         if zones.player == e.idx {
@@ -66,8 +80,7 @@ pub fn enter_snapshot_mode(
     mode: Res<SnapshotMode>,
     mut q_camera: Query<&mut Transform, With<MainCamera>>,
     mut e_change_snapshot: EventWriter<UpdateSnapshotTilesEvent>,
-)
-{
+) {
     let center_of_zone = zone_transform_center(mode.idx);
     let Ok(mut camera) = q_camera.get_single_mut() else {
         return;
@@ -75,11 +88,17 @@ pub fn enter_snapshot_mode(
 
     camera.translation = vec3(center_of_zone.0, center_of_zone.1, 0.);
 
-    let container = cmds.spawn((
-        Name::new("snapshot"),
-        Transform::default(),
-        Visibility::Visible,
-    )).id();
+    let container = cmds
+        .spawn((
+            Name::new("snapshot"),
+            Transform::default(),
+            Visibility::Visible,
+        ))
+        .id();
+
+    // cmds.spawn((
+    //     Text2d::new("Testing"),
+    // )).set_parent(container);
 
     let mut tiles = vec![];
 
@@ -106,9 +125,21 @@ pub fn enter_snapshot_mode(
         tiles: Grid::init_from_vec(ZONE_SIZE.0, ZONE_SIZE.1, tiles),
     });
 
-    e_change_snapshot.send(UpdateSnapshotTilesEvent {
-        snap_idx: 0
-    });
+    e_change_snapshot.send(UpdateSnapshotTilesEvent { snap_idx: 0 });
+}
+
+pub fn snapshot_cursor(cursor: Res<CursorPosition>, mode: Res<SnapshotMode>) {
+    let Some(snapshot) = mode.snapshots.get(mode.current_snap_idx) else {
+        return;
+    };
+
+    let (x, y) = world_to_zone_local(cursor.x, cursor.y);
+
+    let Some(tile) = snapshot.data.get(x, y) else {
+        return;
+    };
+
+    
 }
 
 pub fn snapshot_controls(
@@ -127,19 +158,19 @@ pub fn snapshot_controls(
     if keys.just_pressed(KeyCode::KeyW) && mode.current_snap_idx < mode.snapshots.len() - 1 {
         mode.current_snap_idx += 1;
         e_change_snapshot.send(UpdateSnapshotTilesEvent {
-            snap_idx: mode.current_snap_idx
+            snap_idx: mode.current_snap_idx,
         });
     }
+
     if keys.just_pressed(KeyCode::KeyS) && mode.current_snap_idx > 0 {
         mode.current_snap_idx -= 1;
         e_change_snapshot.send(UpdateSnapshotTilesEvent {
-            snap_idx: mode.current_snap_idx
+            snap_idx: mode.current_snap_idx,
         });
     }
 
     keys.reset_all();
 }
-
 
 pub fn on_update_snapshot_tiles(
     mut e_change_snapshot: EventReader<UpdateSnapshotTilesEvent>,

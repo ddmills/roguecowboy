@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::{
     GameState,
     glyph::{Glyph, Position},
-    projection::{ZONE_SIZE, MAP_SIZE, Z_LAYER_ACTORS},
+    projection::{MAP_SIZE, Z_LAYER_ACTORS, ZONE_SIZE},
 };
 
 pub struct PlayerPlugin;
@@ -159,5 +159,4 @@ pub fn player_input(
             z: position.z,
         });
     }
-
 }

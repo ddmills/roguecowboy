@@ -2,11 +2,17 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Grid, Grid3d, Rand}, glyph::Position, player::Player, projection::{zone_idx, zone_xyz, ZONE_SIZE, MAP_SIZE}, GameState
+    GameState,
+    common::{Grid, Grid3d, Rand},
+    glyph::Position,
+    player::Player,
+    projection::{MAP_SIZE, ZONE_SIZE, zone_idx, zone_xyz},
 };
 
 use super::{
-    on_load_zone, on_player_move, on_set_zone_status, on_spawn_zone, on_unload_zone, LoadZoneEvent, SetZoneStatusEvent, SpawnZoneEvent, UnloadZoneEvent, ZoneConstraints, ZoneData, ENABLE_ZONE_SNAPSHOTS
+    ENABLE_ZONE_SNAPSHOTS, LoadZoneEvent, SetZoneStatusEvent, SpawnZoneEvent, UnloadZoneEvent,
+    ZoneConstraints, ZoneData, on_load_zone, on_player_move, on_set_zone_status, on_spawn_zone,
+    on_unload_zone,
 };
 
 pub struct MapPlugin;
@@ -59,7 +65,7 @@ impl Map {
             return ZoneContinuity {
                 south: vec![],
                 west: vec![],
-            }
+            };
         }
 
         let idx = zone_idx(x, y, z);
@@ -74,7 +80,7 @@ impl Map {
                 let r = rand.range_n(1, ZONE_SIZE.0 as i32 - 1) as usize;
                 south[r] = 1;
             }
-            
+
             // path
             if x % 4 == 0 {
                 let r = rand.range_n(1, ZONE_SIZE.0 as i32 - 1) as usize;
@@ -302,7 +308,7 @@ fn load_nearby_zones(
     if ENABLE_ZONE_SNAPSHOTS {
         needed_zones = zones.active.clone();
     }
-    
+
     let mut zones_to_load = vec![];
     let mut zones_to_dormant = vec![];
     let mut zones_to_active = vec![];

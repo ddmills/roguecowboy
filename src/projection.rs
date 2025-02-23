@@ -3,15 +3,15 @@ pub const MAP_SIZE: (usize, usize, usize) = (8, 6, 4);
 pub const MAP_SIZE_F32: (f32, f32, f32) = (MAP_SIZE.0 as f32, MAP_SIZE.1 as f32, MAP_SIZE.2 as f32);
 
 // width and height of a zone, in tiles
-pub const ZONE_SIZE: (usize, usize) = (32, 24);
+pub const ZONE_SIZE: (usize, usize) = (40, 20);
 pub const ZONE_SIZE_F32: (f32, f32) = (ZONE_SIZE.0 as f32, ZONE_SIZE.1 as f32);
 
 // width and height of a tile, in texels
-pub const TILE_SIZE: (usize, usize) = (16, 16);
+pub const TILE_SIZE: (usize, usize) = (16, 24);
 pub const TILE_SIZE_F32: (f32, f32) = (TILE_SIZE.0 as f32, TILE_SIZE.1 as f32);
 
 // size of a texel, in pixels
-pub const TEXEL_SIZE: usize = 2;
+pub const TEXEL_SIZE: usize = 1;
 pub const TEXEL_SIZE_F32: f32 = TEXEL_SIZE as f32;
 
 pub const Z_LAYER_GROUND: usize = 0;
@@ -36,8 +36,8 @@ pub fn zone_xyz(zone_idx: usize) -> (usize, usize, usize) {
 
 // convert world coordinates to local zone coordinates
 #[inline]
-pub fn world_to_zone_local(x: usize, y: usize, z: usize) -> (usize, usize, usize) {
-    (x % ZONE_SIZE.0, y % ZONE_SIZE.1, z)
+pub fn world_to_zone_local(x: usize, y: usize) -> (usize, usize) {
+    (x % ZONE_SIZE.0, y % ZONE_SIZE.1)
 }
 
 // convert local zone coordinates to world coordinates
@@ -60,8 +60,7 @@ pub fn world_to_px(x: usize, y: usize) -> (usize, usize) {
     (x * TILE_SIZE.0, y * TILE_SIZE.1)
 }
 
-pub fn zone_transform_center(zone_idx: usize) -> (f32, f32)
-{
+pub fn zone_transform_center(zone_idx: usize) -> (f32, f32) {
     let zone_pos = zone_xyz(zone_idx);
     (
         (zone_pos.0 * ZONE_SIZE.0 * TILE_SIZE.0) as f32
@@ -73,7 +72,8 @@ pub fn zone_transform_center(zone_idx: usize) -> (f32, f32)
     )
 }
 
-pub fn world_in_bounds(x: u32, y: u32, z: u32) -> bool {
+// returns true if world coordinate is in bounds
+pub fn is_in_bounds(x: u32, y: u32, z: u32) -> bool {
     x > 0
         && y > 0
         && z > 0

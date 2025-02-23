@@ -1,3 +1,4 @@
+use bevy::log::warn;
 use ordered_float::*;
 use std::collections::HashMap;
 
@@ -14,6 +15,7 @@ where
     pub start: T,
     pub is_goal: G,
     pub cost: C,
+    // Heuristic should not exceed the real cost, or bad path is returned!
     pub heuristic: H,
     pub neighbors: N,
     pub max_depth: u32,
@@ -57,7 +59,7 @@ where
         depth += 1;
 
         if depth >= settings.max_depth {
-            println!("astar max_depth={} exceeded", settings.max_depth);
+            warn!("astar max_depth={} exceeded", settings.max_depth);
             break;
         }
 
@@ -87,8 +89,8 @@ where
             if !costs.contains_key(&next) || new_cost < *costs.get(&next).unwrap() {
                 costs.insert(next, new_cost);
 
-                // todo: use a min priority queue and remove hard-coded float here
-                let priority = OrderedFloat(100000.0) - new_cost * (settings.heuristic)(next);
+                // todo: use a min priority queue and remove hard-coded float
+                let priority = OrderedFloat(100000.0) - (new_cost + (settings.heuristic)(next));
 
                 open.put(next, priority);
                 from.insert(next, current);

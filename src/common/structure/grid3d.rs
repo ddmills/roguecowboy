@@ -103,6 +103,11 @@ impl<T> Grid3d<T> {
     }
 
     pub fn is_on_edge(&self, x: usize, y: usize, z: usize) -> bool {
-        x == 0 || x == self.width - 1 || y == 0 || y == self.height - 1 || z == 0 || z == self.depth - 1
+        x == 0
+            || x == self.width - 1
+            || y == 0
+            || y == self.height - 1
+            || z == 0
+            || z == self.depth - 1
     }
 }

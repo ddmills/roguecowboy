@@ -1,8 +1,8 @@
-use bevy::{math::vec3, prelude::*};
+use bevy::{math::vec3, prelude::*, window::PrimaryWindow};
 
 use crate::{
     glyph::Position, player::Player, projection::{
-        world_to_zone_idx, zone_transform_center, zone_xyz, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32, ZONE_SIZE, ZONE_SIZE_F32
+        world_to_zone_idx, zone_transform_center, MAP_SIZE_F32, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32, ZONE_SIZE, ZONE_SIZE_F32
     }, GameState
 };
 
@@ -10,21 +10,29 @@ pub struct CameraPlugin;
 #[derive(Component)]
 pub struct MainCamera;
 
+#[derive(Resource, Default)]
+pub struct CursorPosition {
+    pub x: usize,
+    pub y: usize,
+}
+
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_camera)
+        app.init_resource::<CursorPosition>()
+            .add_systems(Startup, setup_camera)
             .add_systems(
                 Update,
                 camera_follow_player.run_if(in_state(GameState::Playing)),
             )
-            .add_systems(Update, close_on_esc);
+            .add_systems(Update, close_on_esc)
+            .add_systems(Update, on_mouse_move);
     }
 }
 
 fn setup_camera(mut cmds: Commands) {
     let mut projection = OrthographicProjection::default_2d();
     projection.scale = 1. / TEXEL_SIZE_F32;
-    cmds.spawn((Camera2d, MainCamera, projection));
+    cmds.spawn((Camera2d, MainCamera, projection, Msaa::Off));
 }
 
 pub fn camera_follow_player(
@@ -39,10 +47,10 @@ pub fn camera_follow_player(
 
     let zone_idx = world_to_zone_idx(player.x, player.y, player.z);
     let center_of_zone = zone_transform_center(zone_idx);
-    let new_pos = vec3(center_of_zone.0, center_of_zone.1, 0.);
-    let target = camera.translation.lerp(new_pos, a * speed);
+    let target = vec3(center_of_zone.0, center_of_zone.1, 0.);
+    let lerped = camera.translation.lerp(target, a * speed);
 
-    camera.translation = target;
+    camera.translation = lerped;
 }
 
 pub fn close_on_esc(
@@ -59,4 +67,25 @@ pub fn close_on_esc(
             commands.entity(window).despawn();
         }
     }
+}
+
+pub fn on_mouse_move(
+    mut cursor: ResMut<CursorPosition>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
+    q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    let Some(viewport_position) = q_windows.single().cursor_position() else {
+        return;
+    };
+
+    let Ok((camera, camera_transform)) = q_camera.get_single() else {
+        return;
+    };
+
+    let Ok(world_2d) = camera.viewport_to_world_2d(camera_transform, viewport_position) else {
+        return;
+    };
+
+    cursor.x = ((world_2d.x / TILE_SIZE_F32.0) + 0.5).floor().clamp(0., ZONE_SIZE_F32.0 * MAP_SIZE_F32.0) as usize;
+    cursor.y = ((world_2d.y / TILE_SIZE_F32.1) + 0.5).floor().clamp(0., ZONE_SIZE_F32.1 * MAP_SIZE_F32.1) as usize;
 }
