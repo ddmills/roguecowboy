@@ -1,14 +1,9 @@
 use bevy::{math::vec3, prelude::*};
 
 use crate::{
-    GameState,
-    camera::{CursorPosition, MainCamera},
-    common::Grid,
-    glyph::{Glyph, Position},
-    projection::{
-        Z_LAYER_GROUND, Z_LAYER_SNAPSHOT, ZONE_SIZE, is_in_bounds, world_to_zone_local,
-        zone_local_to_world, zone_transform_center,
-    },
+    camera::{CursorPosition, MainCamera}, common::Grid, glyph::{Glyph, Position, Tile}, projection::{
+        is_in_bounds, world_to_zone_local, zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_GROUND, Z_LAYER_SNAPSHOT
+    }, GameState
 };
 
 use super::{ZoneSnapshot, Zones};
@@ -108,8 +103,13 @@ pub fn enter_snapshot_mode(
 
             let mut e = cmds.spawn((
                 Glyph {
-                    idx: 8,
-                    fg: Color::srgb_u8(35, 37, 37),
+                    cp437: None,
+                    tile: Some(Tile::Blank),
+                    fg1: None,
+                    fg2: None,
+                    bg: Some(Color::BLACK),
+                    outline: None,
+                    is_shrouded: false,
                 },
                 Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_SNAPSHOT),
                 SnapshotTile,
@@ -199,7 +199,7 @@ pub fn on_update_snapshot_tiles(
                     continue;
                 };
 
-                glyph.fg = snap_color.to_color();
+                glyph.fg1 = Some(snap_color.to_color());
             }
         }
     }

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     common::Grid,
     glyph::{Glyph, Position},
-    player::{Player, PlayerMovedEvent},
+    player::PlayerMovedEvent,
     projection::{Z_LAYER_GROUND, ZONE_SIZE, world_to_zone_idx, zone_local_to_world},
     save::{save_zone, try_load_zone},
     world::{ENABLE_ZONE_SNAPSHOTS, SimpleZoneBuilder, ZoneBuilder},
@@ -94,12 +94,18 @@ pub fn on_spawn_zone(mut e_spawn_zone: EventReader<SpawnZoneEvent>, mut cmds: Co
             for y in 0..ZONE_SIZE.1 {
                 let terrain = e.data.terrain.get(x, y).unwrap();
                 let wpos = zone_local_to_world(e.data.idx, x, y);
+                let (bg, fg) = terrain.colors();
 
                 let tile_id = cmds
                     .spawn((
                         Glyph {
-                            idx: terrain.sprite_idx(),
-                            fg: Color::srgb_u8(35, 37, 37),
+                            cp437: Some(terrain.sprite_ch()),
+                            tile: Some(terrain.tile()),
+                            bg,
+                            fg1: fg,
+                            fg2: fg,
+                            outline: None,
+                            is_shrouded: true,
                         },
                         Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
                         ZoneStatus::Dormant,

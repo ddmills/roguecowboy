@@ -1,27 +1,84 @@
-use bevy::{math::vec2, prelude::*};
+use bevy::{math::{vec2, vec3}, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
 use crate::{
-    GameState,
-    projection::{TILE_SIZE, world_to_px},
-    world::ZoneStatus,
+    common::{cp437_idx, CP437_NBSP}, projection::{world_to_px, TILE_SIZE, TILE_SIZE_F32}, world::ZoneStatus
 };
+
+pub const CLEAR_COLOR: Color = Color::srgb(0.012, 0.059, 0.106);
+pub const SHROUD_COLOR: Color = Color::srgb(0.227, 0.243, 0.247);
+pub const TRANSPARENT: Color = Color::srgba(0.659, 0.294, 0.294, 0.);
+
+#[repr(u32)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Tile {
+    Grass = 2,
+    Water = 34,
+    Cowboy = 146,
+    Dirt = 19,
+    Blank = 255,
+}
 
 pub struct GlyphPlugin;
 
 impl Plugin for GlyphPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app
+            .add_plugins(Material2dPlugin::<GlyphMaterial>::default())
+            .add_systems(
             Update,
-            (update_glyph_sprites, update_positions, on_status_change),
+            (add_glyph_material, update_glyph_sprites, update_positions, on_status_change).chain(),
         );
     }
 }
 
 #[derive(Component, Default)]
-#[require(Sprite)]
 pub struct Glyph {
-    pub idx: usize,
-    pub fg: Color,
+    pub cp437: Option<char>,
+    pub tile: Option<Tile>,
+    pub fg1: Option<Color>,
+    pub fg2: Option<Color>,
+    pub bg: Option<Color>,
+    pub outline: Option<Color>,
+    pub is_shrouded: bool,
+}
+
+pub struct GlyphColors {
+    pub fg1: Color,
+    pub fg2: Color,
+    pub bg: Color,
+    pub outline: Color,
+}
+
+impl Glyph {
+    pub fn get_cp437(&self) -> usize
+    {
+        match self.cp437 {
+            Some(c) => cp437_idx(c).unwrap_or(0),
+            None => CP437_NBSP,
+        }
+    }
+
+    pub fn get_atlas_idx(&self) -> u32 {
+        self.tile.unwrap_or(Tile::Dirt) as u32
+    }
+
+    pub fn get_colors(&self) -> GlyphColors {
+        if self.is_shrouded {
+            return GlyphColors {
+                bg: TRANSPARENT,
+                fg1: SHROUD_COLOR,
+                fg2: SHROUD_COLOR,
+                outline: CLEAR_COLOR,
+            };
+        }
+
+        return GlyphColors {
+            bg: self.bg.unwrap_or(TRANSPARENT),
+            fg1: self.fg1.unwrap_or(TRANSPARENT),
+            fg2: self.fg2.unwrap_or(TRANSPARENT),
+            outline: self.outline.unwrap_or(CLEAR_COLOR),
+        };
+    }
 }
 
 #[derive(Component)]
@@ -44,18 +101,50 @@ pub fn tile_translation(x: usize, y: usize) -> Vec2 {
     vec2(px.0 as f32, px.1 as f32)
 }
 
-// update any sprites that have glyph changed
-pub fn update_glyph_sprites(
-    mut q_changed: Query<(&Glyph, &mut Sprite), Changed<Glyph>>,
+
+pub fn add_glyph_material(
+    mut cmds: Commands,
+    q_glyphs: Query<(Entity, &Glyph), Added<Glyph>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<GlyphMaterial>>,
     tileset: Res<Tileset>,
 ) {
-    for (glyph, mut sprite) in q_changed.iter_mut() {
-        sprite.image = tileset.texture.clone_weak();
-        sprite.texture_atlas = Some(TextureAtlas {
-            layout: tileset.layout.clone_weak(),
-            index: glyph.idx,
+    for (e, glyph) in q_glyphs.iter() {
+        let colors = glyph.get_colors();
+        let material = materials.add(GlyphMaterial {
+            fg1: colors.fg1.into(),
+            fg2: colors.fg2.into(),
+            bg: colors.bg.into(),
+            outline: colors.outline.into(),
+            atlas: tileset.texture.clone_weak(),
+            idx: glyph.get_atlas_idx(),
         });
-        sprite.color = glyph.fg;
+
+        cmds.entity(e).insert((
+            Mesh2d(meshes.add(Rectangle::default())),
+            MeshMaterial2d(material),
+            Transform::default().with_scale(vec3(TILE_SIZE_F32.0, TILE_SIZE_F32.1, 1.)),
+        ));
+    }
+}
+
+// update any sprites that have glyph changed
+pub fn update_glyph_sprites(
+    q_changed: Query<(&Glyph, &MeshMaterial2d<GlyphMaterial>), Changed<Glyph>>,
+    mut materials: ResMut<Assets<GlyphMaterial>>,
+) {
+    for (glyph, mat_handle) in q_changed.iter() {
+        let Some(material) = materials.get_mut(mat_handle) else {
+            continue;
+        };
+
+        let colors = glyph.get_colors();
+
+        material.fg1 = colors.fg1.into();
+        material.fg2 = colors.fg2.into();
+        material.bg = colors.bg.into();
+        material.outline = colors.outline.into();
+        material.idx = glyph.get_atlas_idx();
     }
 }
 
@@ -78,11 +167,11 @@ pub fn setup_tileset(
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut tileset: ResMut<Tileset>,
 ) {
-    tileset.texture = asset_server.load("tileset_2.png");
+    tileset.texture = asset_server.load("cowboy.png");
     tileset.layout = texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
         UVec2::new(TILE_SIZE.0 as u32, TILE_SIZE.1 as u32),
-        8,
-        8,
+        16,
+        16,
         None,
         None,
     ));
@@ -90,10 +179,33 @@ pub fn setup_tileset(
 
 pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ZoneStatus), Changed<ZoneStatus>>) {
     for (mut glyph, status) in q_changed.iter_mut() {
-        if *status == ZoneStatus::Active {
-            glyph.fg = Color::srgb_u8(255, 255, 255);
-        } else {
-            glyph.fg = Color::srgb_u8(136, 143, 143);
-        }
+        glyph.is_shrouded = *status == ZoneStatus::Dormant;
+    }
+}
+
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct GlyphMaterial {
+    #[uniform(0)]
+    fg1: LinearRgba,
+    #[uniform(1)]
+    fg2: LinearRgba,
+    #[uniform(2)]
+    bg: LinearRgba,
+    #[uniform(3)]
+    outline: LinearRgba,
+    #[uniform(4)]
+    idx: u32,
+    #[texture(5)]
+    #[sampler(6)]
+    atlas: Handle<Image>,
+}
+
+impl Material2d for GlyphMaterial {
+    fn alpha_mode(&self) -> AlphaMode2d {
+        AlphaMode2d::Blend
+    }
+
+    fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+        "shaders/glyph.wgsl".into()
     }
 }

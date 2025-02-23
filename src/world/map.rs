@@ -2,11 +2,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    GameState,
-    common::{Grid, Grid3d, Rand},
-    glyph::Position,
-    player::Player,
-    projection::{MAP_SIZE, ZONE_SIZE, zone_idx, zone_xyz},
+    common::{Grid, Grid3d, Rand}, glyph::{Position, Tile}, player::Player, projection::{zone_idx, zone_xyz, MAP_SIZE, ZONE_SIZE}, GameState
 };
 
 use super::{
@@ -191,12 +187,30 @@ pub enum Terrain {
 }
 
 impl Terrain {
-    pub fn sprite_idx(&self) -> usize {
+    pub fn sprite_ch(&self) -> char {
         match self {
-            Terrain::Grass => 0,
-            Terrain::Dirt => 1,
-            Terrain::River => 3,
-            Terrain::Footpath => 4,
+            Terrain::Grass => '.',
+            Terrain::Dirt => '.',
+            Terrain::River => '~',
+            Terrain::Footpath => '░',
+        }
+    }
+
+    pub fn tile(&self) -> Tile {
+        match self {
+            Terrain::Grass => Tile::Grass,
+            Terrain::Dirt => Tile::Dirt,
+            Terrain::River => Tile::Water,
+            Terrain::Footpath => Tile::Dirt,
+        }
+    }
+
+    pub fn colors(&self) -> (Option<Color>, Option<Color>) {
+        match self {
+            Terrain::Grass => (None, Some(Color::srgb(0.384, 0.514, 0.384))),
+            Terrain::Dirt => (None, Some(Color::srgb(0.278, 0.231, 0.141))),
+            Terrain::River => (Some(Color::srgb(0.125, 0.278, 0.38)), Some(Color::srgb(0.102, 0.443, 0.675))),
+            Terrain::Footpath => (None, Some(Color::srgb(0.502, 0.306, 0.176))),
         }
     }
 }

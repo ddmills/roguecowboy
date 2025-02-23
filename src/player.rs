@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    GameState,
-    glyph::{Glyph, Position},
-    projection::{MAP_SIZE, Z_LAYER_ACTORS, ZONE_SIZE},
+    glyph::{Glyph, Position, Tile}, projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS}, GameState
 };
 
 pub struct PlayerPlugin;
@@ -32,8 +30,13 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
     cmds.spawn((
         Player,
         Glyph {
-            idx: 2,
-            fg: Color::srgb_u8(255, 0, 0),
+            cp437: Some('@'),
+            tile: Some(Tile::Cowboy),
+            fg1: Some(Color::srgb_u8(255, 251, 11)),
+            fg2: Some(Color::srgb_u8(181, 12, 223)),
+            outline: None,
+            bg: None,
+            is_shrouded: false,
         },
         Position::new(8, 8, 0, Z_LAYER_ACTORS),
     ));
@@ -94,8 +97,8 @@ pub fn player_input(
     mut e_player_moved: EventWriter<PlayerMovedEvent>,
 ) {
     let now = time.elapsed_secs_f64();
-    let rate = 0.035;
-    let delay = 0.35;
+    let rate = 0.015;
+    let delay = 0.25;
     let mut moved = false;
 
     let mut position = q_player.single_mut();

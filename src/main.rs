@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
-use glyph::{GlyphPlugin, Tileset, setup_tileset};
+use glyph::{setup_tileset, GlyphPlugin, Tileset, CLEAR_COLOR};
 use player::PlayerPlugin;
 use world::{MapPlugin, ZoneSnapshotPlugin};
 
@@ -35,7 +35,7 @@ fn main() {
         .add_plugins(GlyphPlugin)
         .add_plugins(PlayerPlugin)
         .init_state::<GameState>()
-        .insert_resource(ClearColor(Color::srgb_u8(19, 27, 37)))
+        .insert_resource(ClearColor(CLEAR_COLOR))
         .init_resource::<Tileset>()
         .add_systems(
             OnEnter(GameState::Loading),
