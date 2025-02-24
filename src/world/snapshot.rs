@@ -3,7 +3,7 @@ use bevy::{math::vec3, prelude::*};
 use crate::{
     camera::{CursorPosition, MainCamera}, common::Grid, glyph::{Glyph, Position, Tile}, projection::{
         is_in_bounds, world_to_zone_local, zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_GROUND, Z_LAYER_SNAPSHOT
-    }, GameState
+    }, text::{GlyphText, TextPosition}, GameState
 };
 
 use super::{ZoneSnapshot, Zones};
@@ -90,10 +90,6 @@ pub fn enter_snapshot_mode(
             Visibility::Visible,
         ))
         .id();
-
-    // cmds.spawn((
-    //     Text2d::new("Testing"),
-    // )).set_parent(container);
 
     let mut tiles = vec![];
 

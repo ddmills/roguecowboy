@@ -9,14 +9,18 @@ pub const ZONE_SIZE_F32: (f32, f32) = (ZONE_SIZE.0 as f32, ZONE_SIZE.1 as f32);
 // width and height of a tile, in texels
 pub const TILE_SIZE: (usize, usize) = (16, 24);
 pub const TILE_SIZE_F32: (f32, f32) = (TILE_SIZE.0 as f32, TILE_SIZE.1 as f32);
+pub const TEXT_SIZE: (usize, usize) = (8, 12);
+pub const TEXT_SIZE_F32: (f32, f32) = (TEXT_SIZE.0 as f32, TEXT_SIZE.1 as f32);
+pub const TEXT_TO_TILE_RATIO: (f32, f32) = (TEXT_SIZE_F32.0 / TILE_SIZE_F32.0, TEXT_SIZE_F32.1 / TILE_SIZE_F32.1);
 
 // size of a texel, in pixels
-pub const TEXEL_SIZE: usize = 2;
+pub const TEXEL_SIZE: usize = 1;
 pub const TEXEL_SIZE_F32: f32 = TEXEL_SIZE as f32;
 
 pub const Z_LAYER_GROUND: usize = 0;
 pub const Z_LAYER_ACTORS: usize = 1;
 pub const Z_LAYER_SNAPSHOT: usize = 8;
+pub const Z_LAYER_TEXT: usize = 9;
 
 // Convert a zone position to a zone index
 #[inline]

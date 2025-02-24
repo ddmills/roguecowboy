@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    glyph::{Glyph, Position, Tile}, projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS}, GameState
+    glyph::{Glyph, Position, Tile}, projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_SNAPSHOT, Z_LAYER_TEXT}, text::{GlyphText, TextPosition}, GameState
 };
 
 pub struct PlayerPlugin;
@@ -35,13 +35,30 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
             fg1: Some(Color::srgb_u8(255, 251, 11)),
             fg2: Some(Color::srgb_u8(181, 12, 223)),
             outline: None,
-            bg: None,
+            bg: Some(Color::srgb_u8(151, 230, 99)),
             is_shrouded: false,
         },
         Position::new(8, 8, 0, Z_LAYER_ACTORS),
     ));
 
     e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
+
+    cmds.spawn((
+        GlyphText::new("Under the {C-b border|vast, starry sky}, the cowboy's {R|heart} ached"),
+        TextPosition::new(4.0, 10.5, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        GlyphText::new("for new {y-Y-r-R-r-Y-y stretch|horizons} and {G-g-o-G-g-o repeat|untamed trails}."),
+        TextPosition::new(4.0, 10.0, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        GlyphText::new("With a steady hand, you grip the {C-c-w-W-Y-C-c-C-w repeat|chrome-plated} pistol,"),
+        TextPosition::new(4.0, 9.0, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        GlyphText::new("eyes scanning the {b|darkness}, ready to face the unknown."),
+        TextPosition::new(4.0, 8.5, 0.0, Z_LAYER_TEXT),
+    ));
 }
 
 #[derive(Default)]

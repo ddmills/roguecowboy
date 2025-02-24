@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{common::Grid, world::Terrain};
 
-pub const ENABLE_ZONE_SNAPSHOTS: bool = false;
+pub const ENABLE_ZONE_SNAPSHOTS: bool = true;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ZoneData {

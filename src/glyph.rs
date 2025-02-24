@@ -7,11 +7,12 @@ use crate::{
 pub const CLEAR_COLOR: Color = Color::srgb(0.012, 0.059, 0.106);
 pub const SHROUD_COLOR: Color = Color::srgb(0.227, 0.243, 0.247);
 pub const TRANSPARENT: Color = Color::srgba(0.659, 0.294, 0.294, 0.);
+pub const TEXT_COLOR: Color = Color::srgb(0.804, 0.867, 0.875);
 
 #[repr(u32)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Tile {
-    Grass = 2,
+    Grass = 3,
     Water = 34,
     Cowboy = 146,
     Dirt = 19,
@@ -26,12 +27,12 @@ impl Plugin for GlyphPlugin {
             .add_plugins(Material2dPlugin::<GlyphMaterial>::default())
             .add_systems(
             Update,
-            (add_glyph_material, update_glyph_sprites, update_positions, on_status_change).chain(),
+            (add_glyph_material, update_glyph_material, update_positions, on_status_change).chain(),
         );
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
 pub struct Glyph {
     pub cp437: Option<char>,
     pub tile: Option<Tile>,
@@ -72,16 +73,16 @@ impl Glyph {
             };
         }
 
-        return GlyphColors {
+        GlyphColors {
             bg: self.bg.unwrap_or(TRANSPARENT),
             fg1: self.fg1.unwrap_or(TRANSPARENT),
             fg2: self.fg2.unwrap_or(TRANSPARENT),
             outline: self.outline.unwrap_or(CLEAR_COLOR),
-        };
+        }
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 #[require(Transform)]
 pub struct Position {
     pub x: usize,
@@ -96,11 +97,10 @@ impl Position {
     }
 }
 
-pub fn tile_translation(x: usize, y: usize) -> Vec2 {
+pub fn glyph_translation(x: usize, y: usize) -> Vec2 {
     let px = world_to_px(x, y);
     vec2(px.0 as f32, px.1 as f32)
 }
-
 
 pub fn add_glyph_material(
     mut cmds: Commands,
@@ -121,15 +121,15 @@ pub fn add_glyph_material(
         });
 
         cmds.entity(e).insert((
-            Mesh2d(meshes.add(Rectangle::default())),
+            Mesh2d(meshes.add(Rectangle::from_size(vec2(TILE_SIZE_F32.0, TILE_SIZE_F32.1)))),
             MeshMaterial2d(material),
-            Transform::default().with_scale(vec3(TILE_SIZE_F32.0, TILE_SIZE_F32.1, 1.)),
+            Transform::default(),
         ));
     }
 }
 
 // update any sprites that have glyph changed
-pub fn update_glyph_sprites(
+pub fn update_glyph_material(
     q_changed: Query<(&Glyph, &MeshMaterial2d<GlyphMaterial>), Changed<Glyph>>,
     mut materials: ResMut<Assets<GlyphMaterial>>,
 ) {
@@ -151,30 +151,23 @@ pub fn update_glyph_sprites(
 pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (position, mut transform) in q_changed.iter_mut() {
         let z = (10 * position.z + (10 - position.layer)) as f32;
-        let target = tile_translation(position.x, position.y).extend(-z);
+        let target = glyph_translation(position.x, position.y).extend(-z);
         transform.translation = target;
     }
 }
 
 #[derive(Resource, Default)]
 pub struct Tileset {
-    layout: Handle<TextureAtlasLayout>,
-    texture: Handle<Image>,
+    pub texture: Handle<Image>,
+    pub font_texture: Handle<Image>,
 }
 
 pub fn setup_tileset(
     asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut tileset: ResMut<Tileset>,
 ) {
     tileset.texture = asset_server.load("cowboy.png");
-    tileset.layout = texture_atlas_layouts.add(TextureAtlasLayout::from_grid(
-        UVec2::new(TILE_SIZE.0 as u32, TILE_SIZE.1 as u32),
-        16,
-        16,
-        None,
-        None,
-    ));
+    tileset.font_texture = asset_server.load("bizcat_8x12.png");
 }
 
 pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ZoneStatus), Changed<ZoneStatus>>) {

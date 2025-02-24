@@ -360,13 +360,21 @@ fn load_nearby_zones(
 
     let zones_to_unload = [cur_active_zones, cur_dormant_zones].concat();
 
-    for idx in zones_to_load.iter() {
+    if let Some(idx) = zones_to_load.first() {
         e_load_zone.send(LoadZoneEvent(*idx));
     }
 
-    for idx in zones_to_unload.iter() {
+    if let Some(idx) = zones_to_unload.first() {
         e_unload_zone.send(UnloadZoneEvent(*idx));
     }
+
+    // for idx in zones_to_load.iter() {
+    //     e_load_zone.send(LoadZoneEvent(*idx));
+    // }
+
+    // for idx in zones_to_unload.iter() {
+    //     e_unload_zone.send(UnloadZoneEvent(*idx));
+    // }
 
     for idx in zones_to_active.iter() {
         e_set_zone_status.send(SetZoneStatusEvent {
