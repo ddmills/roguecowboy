@@ -14,13 +14,13 @@ pub const TEXT_SIZE_F32: (f32, f32) = (TEXT_SIZE.0 as f32, TEXT_SIZE.1 as f32);
 pub const TEXT_TO_TILE_RATIO: (f32, f32) = (TEXT_SIZE_F32.0 / TILE_SIZE_F32.0, TEXT_SIZE_F32.1 / TILE_SIZE_F32.1);
 
 // size of a texel, in pixels
-pub const TEXEL_SIZE: usize = 1;
+pub const TEXEL_SIZE: usize = 2;
 pub const TEXEL_SIZE_F32: f32 = TEXEL_SIZE as f32;
 
 pub const Z_LAYER_GROUND: usize = 0;
 pub const Z_LAYER_ACTORS: usize = 1;
-pub const Z_LAYER_SNAPSHOT: usize = 8;
-pub const Z_LAYER_TEXT: usize = 9;
+pub const Z_LAYER_SNAPSHOT: usize = 3;
+pub const Z_LAYER_TEXT: usize = 8;
 
 // Convert a zone position to a zone index
 #[inline]
@@ -74,14 +74,4 @@ pub fn zone_transform_center(zone_idx: usize) -> (f32, f32) {
             + ((ZONE_SIZE_F32.1 * TILE_SIZE_F32.1) / 2.)
             - (TILE_SIZE_F32.1 / 2.),
     )
-}
-
-// returns true if world coordinate is in bounds
-pub fn is_in_bounds(x: u32, y: u32, z: u32) -> bool {
-    x > 0
-        && y > 0
-        && z > 0
-        && x < (MAP_SIZE.0 * ZONE_SIZE.0) as u32
-        && y < (MAP_SIZE.1 * ZONE_SIZE.1) as u32
-        && z < MAP_SIZE.2 as u32
 }

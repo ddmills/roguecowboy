@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    common::{Grid, Grid3d, Rand}, glyph::{Position, Tile}, player::Player, projection::{zone_idx, zone_xyz, MAP_SIZE, ZONE_SIZE}, GameState
+    common::{Grid, Grid3d, Rand}, player::Player, projection::{zone_idx, zone_xyz, MAP_SIZE, ZONE_SIZE}, rendering::{Palette, Position, Tile}, GameState
 };
 
 use super::{
@@ -158,16 +158,6 @@ impl Zone {
     }
 
     #[inline]
-    pub fn set_terrain(&mut self, x: usize, y: usize, terrain: Terrain) {
-        self.terrain.set(x, y, terrain);
-    }
-
-    #[inline]
-    pub fn get_terrain(&self, x: usize, y: usize) -> Option<&Terrain> {
-        self.terrain.get(x, y)
-    }
-
-    #[inline]
     pub fn idx(&self) -> usize {
         self.idx
     }
@@ -205,12 +195,12 @@ impl Terrain {
         }
     }
 
-    pub fn colors(&self) -> (Option<Color>, Option<Color>) {
+    pub fn colors(&self) -> (Option<u32>, Option<u32>) {
         match self {
-            Terrain::Grass => (None, Some(Color::srgb(0.384, 0.514, 0.384))),
-            Terrain::Dirt => (None, Some(Color::srgb(0.278, 0.231, 0.141))),
-            Terrain::River => (Some(Color::srgb(0.125, 0.278, 0.38)), Some(Color::srgb(0.102, 0.443, 0.675))),
-            Terrain::Footpath => (None, Some(Color::srgb(0.502, 0.306, 0.176))),
+            Terrain::Grass => (None, Some(Palette::Green.into())),
+            Terrain::Dirt => (None, Some(Palette::Brown.into())),
+            Terrain::River => (Some(Palette::Blue.into()), Some(Palette::Cyan.into())),
+            Terrain::Footpath => (None, Some(Palette::Brown.into())),
         }
     }
 }
@@ -228,7 +218,7 @@ fn zone_visibility(
         let zone_pos = zone_xyz(zone.idx);
 
         // compare Z levels
-        if zone_pos.2 != player.z {
+        if zone_pos.2 != player.z.floor() as usize {
             cmds.entity(zone_e).insert(Visibility::Hidden);
         } else {
             cmds.entity(zone_e).insert(Visibility::Visible);

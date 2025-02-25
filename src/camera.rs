@@ -1,9 +1,9 @@
 use bevy::{math::vec3, prelude::*, window::PrimaryWindow};
 
 use crate::{
-    glyph::Position, player::Player, projection::{
-        world_to_zone_idx, zone_transform_center, MAP_SIZE_F32, TEXEL_SIZE_F32, TILE_SIZE, TILE_SIZE_F32, ZONE_SIZE, ZONE_SIZE_F32
-    }, GameState
+    player::Player, projection::{
+        world_to_zone_idx, zone_transform_center, MAP_SIZE_F32, TEXEL_SIZE_F32, TILE_SIZE_F32, ZONE_SIZE_F32
+    }, rendering::Position, GameState
 };
 
 pub struct CameraPlugin;
@@ -45,7 +45,7 @@ pub fn camera_follow_player(
     let a = fixed_time.overstep_fraction();
     let speed = 0.1;
 
-    let zone_idx = world_to_zone_idx(player.x, player.y, player.z);
+    let zone_idx = player.zone_idx();
     let center_of_zone = zone_transform_center(zone_idx);
     let target = vec3(center_of_zone.0, center_of_zone.1, 0.);
     let lerped = camera.translation.lerp(target, a * speed);
@@ -74,7 +74,11 @@ pub fn on_mouse_move(
     q_windows: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) {
-    let Some(viewport_position) = q_windows.single().cursor_position() else {
+    let Ok(window) = q_windows.get_single() else {
+        return;
+    };
+
+    let Some(viewport_position) = window.cursor_position() else {
         return;
     };
 

@@ -1,11 +1,10 @@
 use std::fmt::Display;
 
-use bevy::color::Color;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::Grid, world::Terrain};
+use crate::{common::Grid, rendering::{hex, Palette}, world::Terrain};
 
-pub const ENABLE_ZONE_SNAPSHOTS: bool = true;
+pub const ENABLE_ZONE_SNAPSHOTS: bool = false;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ZoneData {
@@ -69,16 +68,16 @@ impl TileSnapColor {
         }
     }
 
-    pub fn to_color(self) -> Color {
+    pub fn to_color(self) -> u32 {
         match self {
-            TileSnapColor::White => Color::WHITE,
-            TileSnapColor::Black => Color::BLACK,
-            TileSnapColor::Gray(p) => Color::srgb_u8(p, p, p),
-            TileSnapColor::Red => Color::srgb(1., 0., 0.),
-            TileSnapColor::Blue => Color::srgb(0., 0., 1.),
-            TileSnapColor::Green => Color::srgb(0.255, 0.373, 0.255),
-            TileSnapColor::Orange => Color::srgb(1., 0.5, 0.),
-            TileSnapColor::Yellow => Color::srgb(1., 1., 0.),
+            TileSnapColor::White => Palette::White.into(),
+            TileSnapColor::Black => Palette::Black.into(),
+            TileSnapColor::Gray(p) => hex(p, p, p).into(),
+            TileSnapColor::Red => Palette::Red.into(),
+            TileSnapColor::Blue => Palette::Blue.into(),
+            TileSnapColor::Green => Palette::Green.into(),
+            TileSnapColor::Orange => Palette::Orange.into(),
+            TileSnapColor::Yellow => Palette::Yellow.into(),
         }
     }
 }

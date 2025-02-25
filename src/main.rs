@@ -1,18 +1,18 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
-use glyph::{setup_tileset, GlyphPlugin, Tileset, CLEAR_COLOR};
 use player::PlayerPlugin;
-use text::GlyphTextPlugin;
+use rendering::{setup_tileset, BevyColorable, GlyphPlugin, GlyphTextPlugin, Palette, Tileset};
+use ui::UiPlugin;
 use world::{MapPlugin, ZoneSnapshotPlugin};
 
 mod camera;
 mod common;
-mod glyph;
 mod player;
 mod projection;
 mod save;
 mod world;
-mod text;
+mod rendering;
+mod ui;
 
 #[derive(Default, States, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GameState {
@@ -37,8 +37,9 @@ fn main() {
         .add_plugins(GlyphPlugin)
         .add_plugins(GlyphTextPlugin)
         .add_plugins(PlayerPlugin)
+        .add_plugins(UiPlugin)
         .init_state::<GameState>()
-        .insert_resource(ClearColor(CLEAR_COLOR))
+        .insert_resource(ClearColor(Palette::Black.to_bevy_color()))
         .init_resource::<Tileset>()
         .add_systems(
             OnEnter(GameState::Loading),

@@ -1,12 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    common::Grid,
-    glyph::{Glyph, Position},
-    player::PlayerMovedEvent,
-    projection::{Z_LAYER_GROUND, ZONE_SIZE, world_to_zone_idx, zone_local_to_world},
-    save::{save_zone, try_load_zone},
-    world::{ENABLE_ZONE_SNAPSHOTS, SimpleZoneBuilder, ZoneBuilder},
+    common::Grid, player::PlayerMovedEvent, projection::{world_to_zone_idx, zone_local_to_world, ZONE_SIZE, Z_LAYER_GROUND}, rendering::{Glyph, Position}, save::{save_zone, try_load_zone}, world::{SimpleZoneBuilder, ZoneBuilder, ENABLE_ZONE_SNAPSHOTS}
 };
 
 use super::{Map, Zone, ZoneData, ZoneSnapshotsEvent, ZoneStatus, Zones};
@@ -99,7 +94,6 @@ pub fn on_spawn_zone(mut e_spawn_zone: EventReader<SpawnZoneEvent>, mut cmds: Co
                 let tile_id = cmds
                     .spawn((
                         Glyph {
-                            cp437: Some(terrain.sprite_ch()),
                             tile: Some(terrain.tile()),
                             bg,
                             fg1: fg,

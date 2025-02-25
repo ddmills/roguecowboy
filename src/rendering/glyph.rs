@@ -1,13 +1,13 @@
-use bevy::{math::{vec2, vec3}, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
+use std::default;
+
+use bevy::{math::vec2, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
 use crate::{
-    common::{cp437_idx, CP437_NBSP}, projection::{world_to_px, TILE_SIZE, TILE_SIZE_F32}, world::ZoneStatus
+    projection::{world_to_zone_idx, TILE_SIZE_F32}, world::ZoneStatus
 };
 
-pub const CLEAR_COLOR: Color = Color::srgb(0.012, 0.059, 0.106);
-pub const SHROUD_COLOR: Color = Color::srgb(0.227, 0.243, 0.247);
-pub const TRANSPARENT: Color = Color::srgba(0.659, 0.294, 0.294, 0.);
-pub const TEXT_COLOR: Color = Color::srgb(0.804, 0.867, 0.875);
+use super::{BevyColorable, Palette, SHROUD_COLOR, TRANSPARENT};
+
 
 #[repr(u32)]
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -16,7 +16,15 @@ pub enum Tile {
     Water = 34,
     Cowboy = 146,
     Dirt = 19,
-    Blank = 255,
+    Blank = 238,
+    BoxTopRight = 223,
+    BoxTop = 222,
+    BoxTopLeft = 221,
+    BoxLeft = 237,
+    BoxRight = 239,
+    BoxBottomLeft = 253,
+    BoxBottom = 254,
+    BoxBottomRight = 255,
 }
 
 pub struct GlyphPlugin;
@@ -33,13 +41,13 @@ impl Plugin for GlyphPlugin {
 }
 
 #[derive(Component, Default, Clone)]
+#[require(Position)]
 pub struct Glyph {
-    pub cp437: Option<char>,
     pub tile: Option<Tile>,
-    pub fg1: Option<Color>,
-    pub fg2: Option<Color>,
-    pub bg: Option<Color>,
-    pub outline: Option<Color>,
+    pub fg1: Option<u32>,
+    pub fg2: Option<u32>,
+    pub bg: Option<u32>,
+    pub outline: Option<u32>,
     pub is_shrouded: bool,
 }
 
@@ -51,12 +59,28 @@ pub struct GlyphColors {
 }
 
 impl Glyph {
-    pub fn get_cp437(&self) -> usize
+    pub fn new<T: Into<u32>>(tile: Tile, fg1: T, fg2: T) -> Self
     {
-        match self.cp437 {
-            Some(c) => cp437_idx(c).unwrap_or(0),
-            None => CP437_NBSP,
+        Self {
+            tile: Some(tile),
+            fg1: Some(fg1.into()),
+            fg2: Some(fg2.into()),
+            bg: None,
+            outline: None,
+            is_shrouded: false,
         }
+    }
+
+    pub fn bg<T: Into<u32>>(mut self, bg: T) -> Self
+    {
+        self.bg = Some(bg.into());
+        self
+    }
+
+    pub fn outline<T: Into<u32>>(mut self, outline: T) -> Self
+    {
+        self.outline = Some(outline.into());
+        self
     }
 
     pub fn get_atlas_idx(&self) -> u32 {
@@ -69,37 +93,81 @@ impl Glyph {
                 bg: TRANSPARENT,
                 fg1: SHROUD_COLOR,
                 fg2: SHROUD_COLOR,
-                outline: CLEAR_COLOR,
+                outline: Palette::Black.to_bevy_color(),
             };
         }
 
         GlyphColors {
-            bg: self.bg.unwrap_or(TRANSPARENT),
-            fg1: self.fg1.unwrap_or(TRANSPARENT),
-            fg2: self.fg2.unwrap_or(TRANSPARENT),
-            outline: self.outline.unwrap_or(CLEAR_COLOR),
+            bg: self.bg.map(|x| x.to_bevy_color()).unwrap_or(TRANSPARENT),
+            fg1: self.fg1.map(|x| x.to_bevy_color()).unwrap_or(TRANSPARENT),
+            fg2: self.fg2.map(|x| x.to_bevy_color()).unwrap_or(TRANSPARENT),
+            outline: self.outline.map(|x| x.to_bevy_color()).unwrap_or(Palette::Black.to_bevy_color()),
         }
     }
 }
 
-#[derive(Component, Clone, Copy)]
-#[require(Transform)]
+#[derive(Component, Clone, Copy, Default)]
+#[require(Transform, Visibility)]
 pub struct Position {
-    pub x: usize,
-    pub y: usize,
-    pub z: usize,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
     pub layer: usize,
 }
 
 impl Position {
     pub fn new(x: usize, y: usize, z: usize, layer: usize) -> Self {
-        Self { x, y, z, layer }
+        Self {
+            x: x as f32,
+            y: y as f32,
+            z: z as f32,
+            layer
+        }
+    }
+
+    pub fn f32<T: Into<f32>>(x: T, y: T, z: T, layer: usize) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+            layer
+        }
+    }
+    
+    #[inline]
+    pub fn x(&mut self, x: usize) {
+        self.x = x as f32;
+    }
+    
+    #[inline]
+    pub fn y(&mut self, y: usize) {
+        self.y = y as f32;
+    }
+    
+    #[inline]
+    pub fn z(&mut self, z: usize) {
+        self.z = z as f32;
+    }
+
+    #[inline]
+    pub fn world(&self) -> (usize, usize, usize)
+    {
+        (self.x as usize, self.y as usize, self.z as usize)
+    }
+
+    #[inline]
+    pub fn zone_idx(&self) -> usize
+    {
+        world_to_zone_idx(
+            self.x as usize,
+            self.y as usize,
+            self.z as usize,
+        )
     }
 }
 
-pub fn glyph_translation(x: usize, y: usize) -> Vec2 {
-    let px = world_to_px(x, y);
-    vec2(px.0 as f32, px.1 as f32)
+pub fn glyph_translation(x: f32, y: f32) -> Vec2 {
+    vec2(x * TILE_SIZE_F32.0, y * TILE_SIZE_F32.1)
 }
 
 pub fn add_glyph_material(
@@ -123,7 +191,6 @@ pub fn add_glyph_material(
         cmds.entity(e).insert((
             Mesh2d(meshes.add(Rectangle::from_size(vec2(TILE_SIZE_F32.0, TILE_SIZE_F32.1)))),
             MeshMaterial2d(material),
-            Transform::default(),
         ));
     }
 }
@@ -150,7 +217,7 @@ pub fn update_glyph_material(
 
 pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
     for (position, mut transform) in q_changed.iter_mut() {
-        let z = (10 * position.z + (10 - position.layer)) as f32;
+        let z = 100. * position.z + (100. - position.layer as f32);
         let target = glyph_translation(position.x, position.y).extend(-z);
         transform.translation = target;
     }

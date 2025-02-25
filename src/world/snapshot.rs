@@ -1,9 +1,9 @@
 use bevy::{math::vec3, prelude::*};
 
 use crate::{
-    camera::{CursorPosition, MainCamera}, common::Grid, glyph::{Glyph, Position, Tile}, projection::{
-        is_in_bounds, world_to_zone_local, zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_GROUND, Z_LAYER_SNAPSHOT
-    }, text::{GlyphText, TextPosition}, GameState
+    camera::{CursorPosition, MainCamera}, common::Grid, projection::{
+        world_to_zone_local, zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_SNAPSHOT
+    }, rendering::{Glyph, Palette, Position, Tile}, GameState
 };
 
 use super::{ZoneSnapshot, Zones};
@@ -99,11 +99,10 @@ pub fn enter_snapshot_mode(
 
             let mut e = cmds.spawn((
                 Glyph {
-                    cp437: None,
                     tile: Some(Tile::Blank),
                     fg1: None,
                     fg2: None,
-                    bg: Some(Color::BLACK),
+                    bg: Some(Palette::Black.into()),
                     outline: None,
                     is_shrouded: false,
                 },
@@ -134,8 +133,6 @@ pub fn snapshot_cursor(cursor: Res<CursorPosition>, mode: Res<SnapshotMode>) {
     let Some(tile) = snapshot.data.get(x, y) else {
         return;
     };
-
-    
 }
 
 pub fn snapshot_controls(

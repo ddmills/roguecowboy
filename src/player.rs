@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    glyph::{Glyph, Position, Tile}, projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_SNAPSHOT, Z_LAYER_TEXT}, text::{GlyphText, TextPosition}, GameState
+    projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_TEXT}, rendering::{Glyph, Text, Palette, Position, Tile}, ui::UiBox, GameState
 };
 
 pub struct PlayerPlugin;
@@ -29,35 +29,44 @@ pub struct PlayerMovedEvent {
 pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMovedEvent>) {
     cmds.spawn((
         Player,
-        Glyph {
-            cp437: Some('@'),
-            tile: Some(Tile::Cowboy),
-            fg1: Some(Color::srgb_u8(255, 251, 11)),
-            fg2: Some(Color::srgb_u8(181, 12, 223)),
-            outline: None,
-            bg: Some(Color::srgb_u8(151, 230, 99)),
-            is_shrouded: false,
-        },
+        Glyph::new(Tile::BoxTopLeft, Palette::Yellow, Palette::Purple).bg(Palette::LightGreen),
         Position::new(8, 8, 0, Z_LAYER_ACTORS),
     ));
 
     e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
 
     cmds.spawn((
-        GlyphText::new("Under the {C-b border|vast, starry sky}, the cowboy's {R|heart} ached"),
-        TextPosition::new(4.0, 10.5, 0.0, Z_LAYER_TEXT),
+        Text::new("Under the {C-b border|vast, starry sky}, the {R-O-Y-G-B-P stretch|cowboy's} {R|heart} ached"),
+        Position::f32(4.0, 10.5, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
-        GlyphText::new("for new {y-Y-r-R-r-Y-y stretch|horizons} and {G-g-o-G-g-o repeat|untamed trails}."),
-        TextPosition::new(4.0, 10.0, 0.0, Z_LAYER_TEXT),
+        Text::new("for new {r-R-Y-Y-Y-Y-R-r stretch|horizons} and {G-g-o-G-g-o repeat|untamed trails}."),
+        Position::f32(4.0, 10.0, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
-        GlyphText::new("With a steady hand, you grip the {C-c-w-W-Y-C-c-C-w repeat|chrome-plated} pistol,"),
-        TextPosition::new(4.0, 9.0, 0.0, Z_LAYER_TEXT),
+        Text::new("With a steady hand, you grip the {C-c-w-W-Y-C-c-C-w repeat|chrome-plated pistol},"),
+        Position::f32(4.0, 9.0, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
-        GlyphText::new("eyes scanning the {b|darkness}, ready to face the unknown."),
-        TextPosition::new(4.0, 8.5, 0.0, Z_LAYER_TEXT),
+        Text::new("eyes scanning the {b|darkness}, ready to face the unknown."),
+        Position::f32(4.0, 8.5, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        Text::new("{R-O-Y-G-B-P stretch|Howdy Cowboy!}"),
+        Position::f32(0.0, 0.0, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        Text::new("You don't always have to be a {R-O-Y-G-B-P stretch|strong} cowboy."),
+        Position::f32(4.0, 12.5, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        Text::new("sometimes just being an {R-O-Y-G-B-P stretch|alive} cowboy is enough."),
+        Position::f32(4.0, 12.0, 0.0, Z_LAYER_TEXT), // TODO: maybe use `Position` component for text as well, pass a flag alon, Z_LAYER_TEXTg.
+    ));
+
+    cmds.spawn((
+        UiBox::new(24, 12),
+        Position::new(3, 4, 0, Z_LAYER_TEXT),
     ));
 }
 
@@ -114,57 +123,58 @@ pub fn player_input(
     mut e_player_moved: EventWriter<PlayerMovedEvent>,
 ) {
     let now = time.elapsed_secs_f64();
-    let rate = 0.015;
+    let rate = 0.020;
     let delay = 0.25;
     let mut moved = false;
 
     let mut position = q_player.single_mut();
+    let (x, y, z) = position.world();
 
-    if position.x > 0
+    if x > 0
         && keys.pressed(KeyCode::KeyA)
         && input_rate.try_key(KeyCode::KeyA, now, rate, delay)
     {
-        position.x -= 1;
+        position.x(x - 1);
         moved = true;
     }
 
-    if position.x < (MAP_SIZE.0 * ZONE_SIZE.0) - 1
+    if x < (MAP_SIZE.0 * ZONE_SIZE.0) - 1
         && keys.pressed(KeyCode::KeyD)
         && input_rate.try_key(KeyCode::KeyD, now, rate, delay)
     {
-        position.x += 1;
+        position.x(x + 1);
         moved = true;
     }
 
-    if position.y < (MAP_SIZE.1 * ZONE_SIZE.1) - 1
+    if y < (MAP_SIZE.1 * ZONE_SIZE.1) - 1
         && keys.pressed(KeyCode::KeyW)
         && input_rate.try_key(KeyCode::KeyW, now, rate, delay)
     {
-        position.y += 1;
+        position.y(y + 1);
         moved = true;
     }
 
-    if position.y > 0
+    if y > 0
         && keys.pressed(KeyCode::KeyS)
         && input_rate.try_key(KeyCode::KeyS, now, rate, delay)
     {
-        position.y -= 1;
+        position.y(y - 1);
         moved = true;
     }
 
-    if position.z > 0
+    if z > 0
         && keys.pressed(KeyCode::KeyE)
         && input_rate.try_key(KeyCode::KeyE, now, rate, delay)
     {
-        position.z -= 1;
+        position.z(z - 1);
         moved = true;
     }
 
-    if position.z < MAP_SIZE.2 - 1
+    if z < MAP_SIZE.2 - 1
         && keys.pressed(KeyCode::KeyQ)
         && input_rate.try_key(KeyCode::KeyQ, now, rate, delay)
     {
-        position.z += 1;
+        position.z(z + 1);
         moved = true;
     }
 
@@ -174,9 +184,9 @@ pub fn player_input(
 
     if moved {
         e_player_moved.send(PlayerMovedEvent {
-            x: position.x,
-            y: position.y,
-            z: position.z,
+            x: position.x as usize,
+            y: position.y as usize,
+            z: position.z as usize,
         });
     }
 }

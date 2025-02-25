@@ -1,13 +1,13 @@
 use bevy::log::info;
 
 use crate::{
-    common::{astar, remap, AStarSettings, Distance, Grid, Perlin, Rand},
+    common::{astar, remap, AStarSettings, Distance, Grid, Rand},
     projection::ZONE_SIZE,
     world::Terrain,
 };
 
 use super::{
-    bool_snapshot, edge_gradient_buffer, edge_snapshot, grayscale_snapshot, noise_grid, rand_grid, terrain_snapshot, ZoneBuilder, ZoneConstraints, ZoneData, ZoneSnapshot, ENABLE_ZONE_SNAPSHOTS
+    bool_snapshot, edge_gradient_buffer, edge_snapshot, noise_grid, rand_grid, terrain_snapshot, ZoneBuilder, ZoneConstraints, ZoneData, ZoneSnapshot, ENABLE_ZONE_SNAPSHOTS
 };
 
 #[derive(Default)]
@@ -108,13 +108,13 @@ impl ZoneBuilder for SimpleZoneBuilder {
                 let result = astar(AStarSettings {
                     start: [p1.0, p1.1],
                     is_goal: |p| p[0] == p2.0 && p[1] == p2.1,
-                    cost: |a, b| {
+                    cost: |_, b| {
                         let [x, y] = b;
                         let h = height.get(x, y).unwrap();
                         let r = rand_noise.get(x, y).unwrap();
                         let t = terrain.get(x, y).unwrap();
                         let e = remap(1. - edge_buffer.get(x, y).unwrap(), 0.25, 1.);
-            
+
                         let terrain_cost: f32 = match t {
                             Terrain::Grass => 1.0,
                             Terrain::Dirt => 1.0,
@@ -126,8 +126,7 @@ impl ZoneBuilder for SimpleZoneBuilder {
                             true => 10.0,
                             false => 1.0,
                         };
-            
-                        rand_cost * h * terrain_cost
+                        1. + rand_cost * h * terrain_cost
                     },
                     heuristic: |[x, y]| {
                         0.1 * Distance::chebyshev(
