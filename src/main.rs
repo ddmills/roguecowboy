@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
 use player::PlayerPlugin;
-use rendering::{setup_tileset, BevyColorable, GlyphPlugin, GlyphTextPlugin, Palette, Tileset};
+use rendering::{setup_tileset, BevyColorable, GlyphPlugin, GlyphTextPlugin, Palette, TilesetTextures};
 use ui::UiPlugin;
 use world::{MapPlugin, ZoneSnapshotPlugin};
 
@@ -39,8 +39,8 @@ fn main() {
         .add_plugins(PlayerPlugin)
         .add_plugins(UiPlugin)
         .init_state::<GameState>()
-        .insert_resource(ClearColor(Palette::Black.to_bevy_color()))
-        .init_resource::<Tileset>()
+        .insert_resource(ClearColor(0xffff00_u32.to_bevy_color()))
+        .init_resource::<TilesetTextures>()
         .add_systems(
             OnEnter(GameState::Loading),
             (setup_tileset, go_to_state(GameState::Playing)).chain(),

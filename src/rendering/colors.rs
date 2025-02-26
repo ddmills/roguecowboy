@@ -174,19 +174,20 @@ impl ColorSequence {
                 fg2: None,
                 bg: Some(Palette::Black.to_bevy_color()),
                 outline: None,
+                tileset: super::Tileset::BodyFont,
             }
         }).collect()
     }
 }
 
-pub fn get_text_glyphs(text: &Text) -> Vec<TextGlyph>
+pub fn get_text_glyphs(value: &String, fg: Option<u32>, bg: Option<u32>) -> Vec<TextGlyph>
 {
     let mut in_seq = false;
     let mut in_flags = false;
     let mut seq_setting = String::new();
     let mut seq_value = String::new();
 
-    text.value.chars().filter_map(|c| {
+    value.chars().filter_map(|c| {
         if c == START_SEQ {
             in_seq = true;
             in_flags = true;
@@ -223,10 +224,11 @@ pub fn get_text_glyphs(text: &Text) -> Vec<TextGlyph>
 
         Some(vec![TextGlyph {
             cp437: Some(c),
-            fg1: text.fg.map(|x| x.to_bevy_color()),
+            fg1: fg.map(|x| x.to_bevy_color()),
             fg2: None,
-            bg: text.bg.map(|x| x.to_bevy_color()),
+            bg: bg.map(|x| x.to_bevy_color()),
             outline: None,
+            tileset: super::Tileset::BodyFont,
         }])
     }).flatten().collect()
 }

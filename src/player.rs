@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 
 use crate::{
     projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_TEXT}, rendering::{Glyph, Text, Palette, Position, Tile}, ui::UiBox, GameState
@@ -36,8 +36,20 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
     e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
 
     cmds.spawn((
-        Text::new("Under the {C-b border|vast, starry sky}, the {R-O-Y-G-B-P stretch|cowboy's} {R|heart} ached"),
-        Position::f32(4.0, 10.5, 0.0, Z_LAYER_TEXT),
+        Text::new(" You discovered... ").bg(Palette::Black.into()).fg(Palette::White.into()),
+        Position::f32(17.0, 15., 0.0, Z_LAYER_TEXT),
+    ));
+
+
+    cmds.spawn((
+        Text::title("♦ {C|ESPERLOOSA OUTPOST} ♦").bg(Palette::Black.into()).fg(Palette::Yellow.into()),
+        Position::f32(16.0, 14., 0.0, Z_LAYER_TEXT),
+    ));
+
+
+    cmds.spawn((
+        Text::new("Under the {C-b border|vast, starry sky}, the {R-O-Y-G-B-P stretch|cowboy's} {R|heart} ached").bg(Palette::Black.into()),
+        Position::f32(4.0, 6.0, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
         Text::new("for new {r-R-Y-Y-Y-Y-R-r stretch|horizons} and {G-g-o-G-g-o repeat|untamed trails}."),
@@ -53,21 +65,25 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
     ));
     cmds.spawn((
         Text::new("{R-O-Y-G-B-P stretch|Howdy Cowboy!}"),
-        Position::f32(0.0, 0.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(0.0, 3.0, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
-        Text::new("You don't always have to be a {R-O-Y-G-B-P stretch|strong} cowboy."),
-        Position::f32(4.0, 12.5, 0.0, Z_LAYER_TEXT),
+        Text::new("Why are these sprites rendered weird?").bg(Palette::Red.into()),
+        Position::f32(18.0, 4.0, 0.0, Z_LAYER_TEXT),
     ));
     cmds.spawn((
-        Text::new("sometimes just being an {R-O-Y-G-B-P stretch|alive} cowboy is enough."),
-        Position::f32(4.0, 12.0, 0.0, Z_LAYER_TEXT), // TODO: maybe use `Position` component for text as well, pass a flag alon, Z_LAYER_TEXTg.
+        Text::new("You don't always have to be a {R-O-Y-G-B-P stretch|strong} cowboy.").bg(Palette::Black.into()),
+        Position::f32(0.0, 0.5, 0.0, Z_LAYER_TEXT),
+    ));
+    cmds.spawn((
+        Text::new("sometimes just being an {R-O-Y-G-B-P stretch|alive} cowboy is enough.").bg(Palette::Black.into()),
+        Position::f32(0.0, 0.0, 0.0, Z_LAYER_TEXT), // TODO: maybe use `Position` component for text as well, pass a flag alon, Z_LAYER_TEXTg.
     ));
 
-    cmds.spawn((
-        UiBox::new(24, 12),
-        Position::new(3, 4, 0, Z_LAYER_TEXT),
-    ));
+    // cmds.spawn((
+    //     UiBox::new(24, 12),
+    //     Position::new(3, 4, 0, Z_LAYER_TEXT),
+    // ));
 }
 
 #[derive(Default)]

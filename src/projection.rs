@@ -11,7 +11,9 @@ pub const TILE_SIZE: (usize, usize) = (16, 24);
 pub const TILE_SIZE_F32: (f32, f32) = (TILE_SIZE.0 as f32, TILE_SIZE.1 as f32);
 pub const TEXT_SIZE: (usize, usize) = (8, 12);
 pub const TEXT_SIZE_F32: (f32, f32) = (TEXT_SIZE.0 as f32, TEXT_SIZE.1 as f32);
-pub const TEXT_TO_TILE_RATIO: (f32, f32) = (TEXT_SIZE_F32.0 / TILE_SIZE_F32.0, TEXT_SIZE_F32.1 / TILE_SIZE_F32.1);
+
+pub const TITLE_SIZE: (usize, usize) = (8, 24);
+pub const TITLE_SIZE_F32: (f32, f32) = (TITLE_SIZE.0 as f32, TITLE_SIZE.1 as f32);
 
 // size of a texel, in pixels
 pub const TEXEL_SIZE: usize = 2;

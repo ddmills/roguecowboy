@@ -61,8 +61,8 @@ pub fn render_box(
         let z_layer = Z_LAYER_TEXT + 1000;
 
         cmds.spawn((
-            Text::new(" Cowboy    ").bg(Palette::Black.into()).fg(Palette::Yellow.into()),
-            Position::f32(3.0, (settings.height - 1) as f32 + 0.5, 0.0, z_layer + 1),
+            Text::title(" Cowboy Inventory ").bg(Palette::Black.into()).fg(Palette::Yellow.into()),
+            Position::f32(3.0, (settings.height - 1) as f32, 0.0, z_layer + 1),
         )).set_parent(entity);
 
         cmds.spawn((
@@ -71,8 +71,18 @@ pub fn render_box(
         )).set_parent(entity);
 
         cmds.spawn((
-            Text::new(" inventory ").fg(Palette::Green.into()).bg(Palette::Black.into()),
-            Position::f32(3.0, (settings.height - 1) as f32, 0.0, z_layer),
+            Text::new("Big {C|gunslinger} energy").fg(Palette::White.into()),
+            Position::f32(1.0, (settings.height - 2) as f32 , 0.0, z_layer),
+        )).set_parent(entity);
+
+        cmds.spawn((
+            Text::new("► This is more body text").fg(Palette::White.into()),
+            Position::f32(1.0, (settings.height - 4) as f32 + 0.5, 0.0, z_layer),
+        )).set_parent(entity);
+
+        cmds.spawn((
+            Text::new("{Y|►} Trinkets and {R|dynamite}").fg(Palette::White.into()),
+            Position::f32(1.0, (settings.height - 4) as f32, 0.0, z_layer),
         )).set_parent(entity);
 
         for y in 1..(settings.height - 1) {

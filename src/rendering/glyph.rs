@@ -3,7 +3,7 @@ use std::default;
 use bevy::{math::vec2, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
 use crate::{
-    projection::{world_to_zone_idx, TILE_SIZE_F32}, world::ZoneStatus
+    projection::{world_to_zone_idx, TEXT_SIZE, TEXT_SIZE_F32, TILE_SIZE_F32, TITLE_SIZE_F32}, world::ZoneStatus
 };
 
 use super::{BevyColorable, Palette, SHROUD_COLOR, TRANSPARENT};
@@ -175,7 +175,7 @@ pub fn add_glyph_material(
     q_glyphs: Query<(Entity, &Glyph), Added<Glyph>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<GlyphMaterial>>,
-    tileset: Res<Tileset>,
+    tileset: Res<TilesetTextures>,
 ) {
     for (e, glyph) in q_glyphs.iter() {
         let colors = glyph.get_colors();
@@ -224,17 +224,64 @@ pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Change
 }
 
 #[derive(Resource, Default)]
-pub struct Tileset {
+pub struct TilesetTextures {
     pub texture: Handle<Image>,
     pub font_texture: Handle<Image>,
+    pub font_title_texture: Handle<Image>,
+}
+
+impl TilesetTextures {
+    pub fn get(&self, tileset: Tileset) -> Handle<Image>
+    {
+        match tileset {
+            Tileset::Sprite => self.texture.clone_weak(),
+            Tileset::BodyFont => self.font_texture.clone_weak(),
+            Tileset::TitleFont => self.font_title_texture.clone_weak(),
+        }
+    }
+}
+
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+pub enum Tileset {
+    #[default]
+    Sprite,
+    BodyFont,
+    TitleFont,
+}
+
+impl Tileset {
+    pub fn get_size(&self) -> Vec2
+    {
+        match self {
+            Tileset::Sprite => vec2(TILE_SIZE_F32.0, TILE_SIZE_F32.1),
+            Tileset::BodyFont => vec2(TEXT_SIZE_F32.0, TEXT_SIZE_F32.1),
+            Tileset::TitleFont => vec2(TITLE_SIZE_F32.0, TITLE_SIZE_F32.1),
+        }
+    }
+
+    pub fn get_translation_offset(&self, x: f32) -> Vec2
+    {
+        match self {
+            Tileset::Sprite => vec2(TILE_SIZE_F32.0, TILE_SIZE_F32.1),
+            Tileset::BodyFont => vec2(
+                ((x * TEXT_SIZE_F32.0) - TEXT_SIZE_F32.0 / 2.).floor(),
+                (-TEXT_SIZE_F32.1 / 2.).floor(),
+            ),
+            Tileset::TitleFont => vec2(
+                ((x * TITLE_SIZE_F32.0) - TITLE_SIZE_F32.0 / 2.).floor(),
+                0.0,
+            ),
+        }
+    }
 }
 
 pub fn setup_tileset(
     asset_server: Res<AssetServer>,
-    mut tileset: ResMut<Tileset>,
+    mut tileset: ResMut<TilesetTextures>,
 ) {
     tileset.texture = asset_server.load("cowboy.png");
-    tileset.font_texture = asset_server.load("bizcat_8x12.png");
+    tileset.font_texture = asset_server.load("sans_8x12.png");
+    tileset.font_title_texture = asset_server.load("nix8810_8x24.png");
 }
 
 pub fn on_status_change(mut q_changed: Query<(&mut Glyph, &ZoneStatus), Changed<ZoneStatus>>) {

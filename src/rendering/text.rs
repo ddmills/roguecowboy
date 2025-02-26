@@ -1,8 +1,8 @@
-use bevy::{math::vec2, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
+use bevy::{math::vec2, prelude::*, render::{render_resource::AsBindGroup, view::RenderLayers}, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
 use crate::{common::{cp437_idx, CP437_NBSP}, projection::TEXT_SIZE_F32};
 
-use super::{get_text_glyphs, BevyColorable, GlyphColors, Palette, Position, Tileset, END_SEQ, FLAG_SEQ, START_SEQ, TEXT_COLOR, TRANSPARENT};
+use super::{get_text_glyphs, BevyColorable, GlyphColors, Palette, Position, Tileset, TilesetTextures, TRANSPARENT};
 
 
 pub struct GlyphTextPlugin;
@@ -11,7 +11,11 @@ impl Plugin for GlyphTextPlugin {
     fn build(&self, app: &mut bevy::app::App) {
         app
             .add_plugins(Material2dPlugin::<GlyphTextMaterial>::default())
-            .add_systems(Update, (render_text, add_glyph_text_material, update_glyph_text_material).chain());
+            .add_systems(Update, (
+                render_text,
+                add_glyph_text_material,
+                update_glyph_text_material
+            ).chain());
     }
 }
 
@@ -21,6 +25,7 @@ pub struct Text {
     pub value: String,
     pub bg: Option<u32>,
     pub fg: Option<u32>,
+    pub tileset: Tileset,
 }
 
 impl Text {
@@ -30,6 +35,17 @@ impl Text {
             value: value.into(),
             bg: None,
             fg: Some(Palette::White.into()),
+            tileset: Tileset::BodyFont,
+        }
+    }
+
+    pub fn title(value: &str) -> Self
+    {
+        Self {
+            value: value.into(),
+            bg: None,
+            fg: Some(Palette::White.into()),
+            tileset: Tileset::TitleFont,
         }
     }
 
@@ -54,6 +70,7 @@ pub struct TextGlyph {
     pub fg2: Option<Color>,
     pub bg: Option<Color>,
     pub outline: Option<Color>,
+    pub tileset: Tileset,
 }
 
 impl TextGlyph {
@@ -75,20 +92,23 @@ impl TextGlyph {
     }
 }
 
-pub fn glyph_text_translation(idx: usize) -> Vec2 {
-    vec2(
-        (idx as f32 * TEXT_SIZE_F32.0) - TEXT_SIZE_F32.0 / 2.,
-        (TEXT_SIZE_F32.1 / 2.) - TEXT_SIZE_F32.1,
-    )
-}
-
 pub fn render_text(mut cmds: Commands, q_glyph_text: Query<(Entity, &Text), Added<Text>>) {
     for (entity, text) in q_glyph_text.iter() {
-        for (idx, text_glyph) in get_text_glyphs(text).iter().enumerate() {
-            let translation = glyph_text_translation(idx).extend(0.0);
+        for (idx, text_glyph) in get_text_glyphs(&text.value, text.fg, text.bg).iter().enumerate() {
+            let translation = text.tileset
+                .get_translation_offset(idx as f32)
+                .floor()
+                .extend(0.0);
+
+            let mut glyph = text_glyph.to_owned();
+            glyph.tileset = text.tileset;
+
+            if glyph.tileset == Tileset::TitleFont {
+                info!("offset y {}", translation.y);
+            }
 
             let mut child = cmds.spawn((
-                text_glyph.to_owned(),
+                glyph,
                 Transform::from_translation(translation),
             ));
 
@@ -102,21 +122,24 @@ pub fn add_glyph_text_material(
     q_glyphs: Query<(Entity, &TextGlyph), Added<TextGlyph>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<GlyphTextMaterial>>,
-    tileset: Res<Tileset>,
+    tileset: Res<TilesetTextures>,
 ) {
     for (e, glyph) in q_glyphs.iter() {
         let colors = glyph.get_colors();
+        let atlas = tileset.get(glyph.tileset);
         let material = materials.add(GlyphTextMaterial {
             fg1: colors.fg1.into(),
             fg2: colors.fg2.into(),
             bg: colors.bg.into(),
             outline: colors.outline.into(),
             idx: glyph.get_cp437() as u32,
-            atlas: tileset.font_texture.clone_weak(),
+            atlas,
         });
 
+        let size = glyph.tileset.get_size();
+
         cmds.entity(e).insert((
-            Mesh2d(meshes.add(Rectangle::from_size(vec2(TEXT_SIZE_F32.0, TEXT_SIZE_F32.1)))),
+            Mesh2d(meshes.add(Rectangle::from_size(size))),
             MeshMaterial2d(material),
         ));
     }
