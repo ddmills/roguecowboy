@@ -18,26 +18,26 @@ fn fragment(mesh: VertexOutput) -> @location(0) vec4<f32> {
 
     var color = vec4(1.0, 0.1, 0.1, 1.0);
 
-    // transparent (background)
+    // // transparent (background)
     if (tex.a == 0) {
         return bg;
     }
 
     // black (primary)
-    if (tex.r == 0 && tex.g == 0 && tex.b == 0) {
+    if (tex.r == 0 && tex.g == 0 && tex.b == 0 && fg1.a > 0) {
         return fg1;
     }
 
     // white (secondary)
-    if (tex.r == 1 && tex.g == 1 && tex.b == 1) {
+    if (tex.r == 1 && tex.g == 1 && tex.b == 1 && fg2.a > 0) {
         return fg2;
     }
 
     // red (outline)
-    if (tex.r == 1 && tex.g == 0 && tex.b == 0) {
+    if (tex.r == 1 && tex.g == 0 && tex.b == 0 && outline.a > 0) {
         return outline;
     }
 
-    return fg1;
+    return bg;
     // return vec4(1.0, 0.0, 1.0, 1.0);
 }

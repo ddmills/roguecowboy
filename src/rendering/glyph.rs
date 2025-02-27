@@ -280,7 +280,8 @@ pub fn setup_tileset(
     mut tileset: ResMut<TilesetTextures>,
 ) {
     tileset.texture = asset_server.load("cowboy.png");
-    tileset.font_texture = asset_server.load("sans_8x12.png");
+    // tileset.font_texture = asset_server.load("cowboy_8x12.png");
+    tileset.font_texture = asset_server.load("tocky_8x12.png");
     tileset.font_title_texture = asset_server.load("nix8810_8x24.png");
 }
 

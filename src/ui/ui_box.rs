@@ -29,8 +29,13 @@ impl UiBox {
         }
     }
 
-    pub fn title(mut self, title: String) -> Self {
-        self.title = Some(title);
+    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
+        self.title = Some(title.into());
+        self
+    }
+
+    pub fn icon(mut self, icon: Glyph) -> Self {
+        self.icon = Some(icon);
         self
     }
 }
@@ -46,7 +51,6 @@ pub fn render_box(
         let height = (settings.height * TILE_SIZE.1) as f32;
         let rect = meshes.add(Rectangle::new(width, height));
 
-        // let color = Palette::Yellow.to_bevy_color();
         let color = Palette::Black.to_bevy_color();
 
         // background rectangle
@@ -60,30 +64,20 @@ pub fn render_box(
 
         let z_layer = Z_LAYER_TEXT + 1000;
 
-        cmds.spawn((
-            Text::title(" Cowboy Inventory ").bg(Palette::Black.into()).fg(Palette::Yellow.into()),
-            Position::f32(3.0, (settings.height - 1) as f32, 0.0, z_layer + 1),
-        )).set_parent(entity);
+        if let Some(title) = &settings.title {
+            cmds.spawn((
+                Text::title(title).bg(Palette::Black).fg1(Palette::Yellow),
+                Position::f32(3.0, (settings.height - 1) as f32, 0.0, z_layer + 1),
+            )).set_parent(entity);
+        }
 
-        cmds.spawn((
-            Glyph::new(Tile::Cowboy, Palette::Yellow, Palette::Green).bg(Palette::Black),
-            Position::new(2, settings.height - 1, 0, z_layer + 1),
-        )).set_parent(entity);
-
-        cmds.spawn((
-            Text::new("Big {C|gunslinger} energy").fg(Palette::White.into()),
-            Position::f32(1.0, (settings.height - 2) as f32 , 0.0, z_layer),
-        )).set_parent(entity);
-
-        cmds.spawn((
-            Text::new("► This is more body text").fg(Palette::White.into()),
-            Position::f32(1.0, (settings.height - 4) as f32 + 0.5, 0.0, z_layer),
-        )).set_parent(entity);
-
-        cmds.spawn((
-            Text::new("{Y|►} Trinkets and {R|dynamite}").fg(Palette::White.into()),
-            Position::f32(1.0, (settings.height - 4) as f32, 0.0, z_layer),
-        )).set_parent(entity);
+        if let Some(icon) = &settings.icon {
+            cmds.spawn((
+                // Glyph::new(Tile::Cowboy, Palette::Yellow, Palette::Green).bg(Palette::Black),
+                icon.clone(),
+                Position::new(2, settings.height - 1, 0, z_layer + 1),
+            )).set_parent(entity);
+        }
 
         for y in 1..(settings.height - 1) {
             cmds.spawn((

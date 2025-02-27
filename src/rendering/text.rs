@@ -1,8 +1,8 @@
-use bevy::{math::vec2, prelude::*, render::{render_resource::AsBindGroup, view::RenderLayers}, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
+use bevy::{prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
-use crate::{common::{cp437_idx, CP437_NBSP}, projection::TEXT_SIZE_F32};
+use crate::common::{cp437_idx, CP437_NBSP};
 
-use super::{get_text_glyphs, BevyColorable, GlyphColors, Palette, Position, Tileset, TilesetTextures, TRANSPARENT};
+use super::{get_text_glyphs, BevyColorable, GlyphColors, Palette, Position, Tileset, TilesetTextures, SHROUD_COLOR, TRANSPARENT};
 
 
 pub struct GlyphTextPlugin;
@@ -24,7 +24,8 @@ impl Plugin for GlyphTextPlugin {
 pub struct Text {
     pub value: String,
     pub bg: Option<u32>,
-    pub fg: Option<u32>,
+    pub fg1: Option<u32>,
+    pub fg2: Option<u32>,
     pub tileset: Tileset,
 }
 
@@ -34,7 +35,8 @@ impl Text {
         Self {
             value: value.into(),
             bg: None,
-            fg: Some(Palette::White.into()),
+            fg1: Some(Palette::White.into()),
+            fg2: None,
             tileset: Tileset::BodyFont,
         }
     }
@@ -44,20 +46,27 @@ impl Text {
         Self {
             value: value.into(),
             bg: None,
-            fg: Some(Palette::White.into()),
+            fg1: Some(Palette::White.into()),
+            fg2: None,
             tileset: Tileset::TitleFont,
         }
     }
 
-    pub fn bg(mut self, bg: u32) -> Self
+    pub fn bg<T: Into<u32>>(mut self, bg: T) -> Self
     {
-        self.bg = Some(bg);
+        self.bg = Some(bg.into());
         self
     }
 
-    pub fn fg(mut self, fg: u32) -> Self
+    pub fn fg1<T: Into<u32>>(mut self, fg: T) -> Self
     {
-        self.fg = Some(fg);
+        self.fg1 = Some(fg.into());
+        self
+    }
+
+    pub fn fg2<T: Into<u32>>(mut self, fg2: T) -> Self
+    {
+        self.fg2 = Some(fg2.into());
         self
     }
 }
@@ -94,7 +103,7 @@ impl TextGlyph {
 
 pub fn render_text(mut cmds: Commands, q_glyph_text: Query<(Entity, &Text), Added<Text>>) {
     for (entity, text) in q_glyph_text.iter() {
-        for (idx, text_glyph) in get_text_glyphs(&text.value, text.fg, text.bg).iter().enumerate() {
+        for (idx, text_glyph) in get_text_glyphs(text).iter().enumerate() {
             let translation = text.tileset
                 .get_translation_offset(idx as f32)
                 .floor()
@@ -102,6 +111,9 @@ pub fn render_text(mut cmds: Commands, q_glyph_text: Query<(Entity, &Text), Adde
 
             let mut glyph = text_glyph.to_owned();
             glyph.tileset = text.tileset;
+            glyph.bg = glyph.bg.or(text.bg.map(|x| x.to_bevy_color()));
+            glyph.fg1 = glyph.fg1.or(text.fg1.map(|x| x.to_bevy_color()));
+            glyph.fg2 = glyph.fg2.or(text.fg2.map(|x| x.to_bevy_color()));
 
             if glyph.tileset == Tileset::TitleFont {
                 info!("offset y {}", translation.y);

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use camera::CameraPlugin;
 use player::PlayerPlugin;
-use rendering::{setup_tileset, BevyColorable, GlyphPlugin, GlyphTextPlugin, Palette, TilesetTextures};
+use rendering::{setup_tileset, BevyColorable, GlyphPlugin, GlyphTextPlugin, TilesetTextures};
 use ui::UiPlugin;
 use world::{MapPlugin, ZoneSnapshotPlugin};
 
