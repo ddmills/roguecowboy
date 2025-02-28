@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::{
-    projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_TEXT}, rendering::{Glyph, Text, Palette, Position, Tile}, ui::UiBox, GameState
+    camera::Layer, projection::{MAP_SIZE, ZONE_SIZE, Z_LAYER_ACTORS, Z_LAYER_TEXT}, rendering::{Glyph, Palette, Position, Text, Tile}, ui::UiBox, GameState
 };
 
 pub struct PlayerPlugin;
@@ -30,62 +30,61 @@ pub fn setup_player(mut cmds: Commands, mut e_player_moved: EventWriter<PlayerMo
     cmds.spawn((
         Player,
         Glyph::new(Tile::Cowboy, Palette::Yellow, Palette::Purple),
-        Position::new(8, 8, 0, Z_LAYER_ACTORS),
+        Position::new(8, 8, 0, Layer::Actors),
     ));
 
     e_player_moved.send(PlayerMovedEvent { x: 8, y: 8, z: 0 });
 
     cmds.spawn((
         Text::new(" You discovered... ").bg(Palette::Black).fg1(Palette::White),
-        Position::f32(17.0, 15., 0.0, Z_LAYER_TEXT),
+        Position::f32(17.0, 15., 0.0, Layer::Ui),
     ));
 
     cmds.spawn((
         Text::title("♦ {C|ESPERLOOSA OUTPOST} ♦").bg(Palette::Black).fg1(Palette::Yellow).fg2(Palette::Cyan),
-        Position::f32(16.0, 14., 0.0, Z_LAYER_TEXT),
+        Position::f32(16.0, 14., 0.0, Layer::Ui),
     ));
-
     cmds.spawn((
         Text::new("Under the {C-b border|vast, starry sky}, the {R-O-Y-G-B-P stretch|cowboy's} {R|heart} ached").bg(Palette::Black),
-        Position::f32(4.0, 6.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(4.0, 6.0, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("for new {r-R-Y-Y-Y-Y-R-r stretch|horizons} and {G-g-o-G-g-o repeat|untamed trails}.").bg(Palette::Black),
-        Position::f32(4.0, 10.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(4.0, 10.0, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("With a steady hand, you grip the {C-c-w-W-Y-C-c-C-w repeat|chrome-plated pistol},").bg(Palette::Black),
-        Position::f32(4.0, 9.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(4.0, 9.0, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("Eyes Scanning The {b|Darkness}, Ready to Face the Unknown.").bg(Palette::Black),
-        Position::f32(4.0, 8.5, 0.0, Z_LAYER_TEXT),
+        Position::f32(4.0, 8.5, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("{R-O-Y-G-B-P stretch|Howdy Cowboy!}").bg(Palette::Black),
-        Position::f32(0.0, 3.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(0.0, 3.0, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("ABCDEFGHIJKLMNOPQRSTUVWXYZ").bg(Palette::Black),
-        Position::f32(18.0, 3.5, 0.0, Z_LAYER_TEXT),
+        Position::f32(18.0, 3.5, 0.0, Layer::Ui),
     ));
     cmds.spawn((
         Text::new("abcdefghijklmnopqrstuvwxyz").bg(Palette::Black),
-        Position::f32(18.0, 3.0, 0.0, Z_LAYER_TEXT),
+        Position::f32(18.0, 3.0, 0.0, Layer::Ui),
     ));
     cmds.spawn((
         Text::new("You don't always have to be a {R-O-Y-G-B-P stretch|strong} cowboy.").bg(Palette::Black),
-        Position::f32(0.0, 0.5, 0.0, Z_LAYER_TEXT),
+        Position::f32(0.0, 0.5, 0.0, Layer::Fx),
     ));
     cmds.spawn((
         Text::new("sometimes just being an {R-O-Y-G-B-P stretch|alive} cowboy is enough.").bg(Palette::Black),
-        Position::f32(0.0, 0.0, 0.0, Z_LAYER_TEXT), // TODO: maybe use `Position` component for text as well, pass a flag alon, Z_LAYER_TEXTg.
+        Position::f32(0.0, 0.0, 0.0, Layer::Fx), // TODO: maybe use `Position` component for text as well, pass a flag alon, Layer::Fxg.
     ));
     cmds.spawn((
         UiBox::new(24, 12)
             .title("Inventory")
             .icon(Glyph::new(Tile::Cowboy, Palette::Purple, Palette::LightGreen)),
-        Position::new(3, 44, 0, Z_LAYER_TEXT),
+        Position::new(3, 44, 0, Layer::Fx),
     ));
 }
 

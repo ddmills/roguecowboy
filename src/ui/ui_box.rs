@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{projection::{TILE_SIZE, TILE_SIZE_F32, Z_LAYER_TEXT}, rendering::{BevyColorable, Glyph, Palette, Position, Text, Tile}};
+use crate::{camera::Layer, projection::{TILE_SIZE, TILE_SIZE_F32, Z_LAYER_TEXT}, rendering::{BevyColorable, Glyph, Palette, Position, Text, Tile}};
 
 
 pub struct UiPlugin;
@@ -62,12 +62,10 @@ pub fn render_box(
                 height / 2. - TILE_SIZE_F32.1 / 2., 500.),
             )).set_parent(entity);
 
-        let z_layer = Z_LAYER_TEXT + 1000;
-
         if let Some(title) = &settings.title {
             cmds.spawn((
                 Text::title(title).bg(Palette::Black).fg1(Palette::Yellow),
-                Position::f32(3.0, (settings.height - 1) as f32, 0.0, z_layer + 1),
+                Position::f32(3.0, (settings.height - 1) as f32, 0.0, Layer::Ui),
             )).set_parent(entity);
         }
 
@@ -75,52 +73,52 @@ pub fn render_box(
             cmds.spawn((
                 // Glyph::new(Tile::Cowboy, Palette::Yellow, Palette::Green).bg(Palette::Black),
                 icon.clone(),
-                Position::new(2, settings.height - 1, 0, z_layer + 1),
+                Position::new(2, settings.height - 1, 0, Layer::Ui),
             )).set_parent(entity);
         }
 
         for y in 1..(settings.height - 1) {
             cmds.spawn((
                 Glyph::new(Tile::BoxLeft, Palette::Blue, Palette::Orange),
-                Position::new(0, y, 0, z_layer - 1),
+                Position::new(0, y, 0, Layer::Ui),
             )).set_parent(entity);
 
             cmds.spawn((
                 Glyph::new(Tile::BoxRight, Palette::Blue, Palette::Orange),
-                Position::new(settings.width - 1, y, 0, z_layer - 1),
+                Position::new(settings.width - 1, y, 0, Layer::Ui),
             )).set_parent(entity);
         }
 
         for x in 1..(settings.width - 1) {
             cmds.spawn((
                 Glyph::new(Tile::BoxBottom, Palette::Blue, Palette::Orange),
-                Position::new(x, 0, 0, z_layer - 1),
+                Position::new(x, 0, 0, Layer::Ui),
             )).set_parent(entity);
 
             cmds.spawn((
                 Glyph::new(Tile::BoxTop, Palette::Blue, Palette::Orange),
-                Position::new(x, settings.height - 1, 0, z_layer),
+                Position::new(x, settings.height - 1, 0, Layer::Ui),
             )).set_parent(entity);
         }
 
         cmds.spawn((
             Glyph::new(Tile::BoxTopLeft, Palette::Blue, Palette::Orange),
-            Position::new(0, settings.height - 1, 0, z_layer - 1),
+            Position::new(0, settings.height - 1, 0, Layer::Ui),
         )).set_parent(entity);
 
         cmds.spawn((
             Glyph::new(Tile::BoxTopRight, Palette::Blue, Palette::Orange),
-            Position::new(settings.width - 1, settings.height - 1, 0, z_layer - 1),
+            Position::new(settings.width - 1, settings.height - 1, 0, Layer::Ui),
         )).set_parent(entity);
 
         cmds.spawn((
             Glyph::new(Tile::BoxBottomLeft, Palette::Blue, Palette::Orange),
-            Position::new(0, 0, 0, z_layer - 1),
+            Position::new(0, 0, 0, Layer::Ui),
         )).set_parent(entity);
 
         cmds.spawn((
             Glyph::new(Tile::BoxBottomRight, Palette::Blue, Palette::Orange),
-            Position::new(settings.width - 1, 0, 0, z_layer - 1),
+            Position::new(settings.width - 1, 0, 0, Layer::Ui),
         )).set_parent(entity);
     }
 }

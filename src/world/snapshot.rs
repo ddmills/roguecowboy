@@ -1,7 +1,7 @@
 use bevy::{math::vec3, prelude::*};
 
 use crate::{
-    camera::{CursorPosition, MainCamera}, common::Grid, projection::{
+    camera::{CursorPosition, Layer, MainCamera}, common::Grid, projection::{
         world_to_zone_local, zone_local_to_world, zone_transform_center, ZONE_SIZE, Z_LAYER_SNAPSHOT
     }, rendering::{Glyph, Palette, Position, Tile}, GameState
 };
@@ -106,7 +106,7 @@ pub fn enter_snapshot_mode(
                     outline: None,
                     is_shrouded: false,
                 },
-                Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_SNAPSHOT),
+                Position::new(wpos.0, wpos.1, wpos.2, Layer::Fx),
                 SnapshotTile,
             ));
 

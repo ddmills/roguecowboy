@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
+use bevy::{prelude::*, render::{render_resource::AsBindGroup, view::RenderLayers}, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
-use crate::common::{cp437_idx, CP437_NBSP};
+use crate::{camera::Layer, common::{cp437_idx, CP437_NBSP}};
 
 use super::{get_text_glyphs, BevyColorable, GlyphColors, Palette, Position, Tileset, TilesetTextures, SHROUD_COLOR, TRANSPARENT};
 
@@ -121,6 +121,7 @@ pub fn render_text(mut cmds: Commands, q_glyph_text: Query<(Entity, &Text), Adde
 
             let mut child = cmds.spawn((
                 glyph,
+                RenderLayers::layer(Layer::Ui as usize),
                 Transform::from_translation(translation),
             ));
 

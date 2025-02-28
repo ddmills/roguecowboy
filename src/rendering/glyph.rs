@@ -1,9 +1,9 @@
 use std::default;
 
-use bevy::{math::vec2, prelude::*, render::render_resource::AsBindGroup, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
+use bevy::{math::vec2, prelude::*, render::{render_resource::AsBindGroup, view::RenderLayers}, sprite::{AlphaMode2d, Material2d, Material2dPlugin}};
 
 use crate::{
-    projection::{world_to_zone_idx, TEXT_SIZE, TEXT_SIZE_F32, TILE_SIZE_F32, TITLE_SIZE_F32}, world::ZoneStatus
+    camera::Layer, projection::{world_to_zone_idx, TEXT_SIZE_F32, TILE_SIZE_F32, TITLE_SIZE_F32}, world::ZoneStatus
 };
 
 use super::{BevyColorable, Palette, SHROUD_COLOR, TRANSPARENT};
@@ -112,11 +112,11 @@ pub struct Position {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub layer: usize,
+    pub layer: Layer,
 }
 
 impl Position {
-    pub fn new(x: usize, y: usize, z: usize, layer: usize) -> Self {
+    pub fn new(x: usize, y: usize, z: usize, layer: Layer) -> Self {
         Self {
             x: x as f32,
             y: y as f32,
@@ -125,7 +125,7 @@ impl Position {
         }
     }
 
-    pub fn f32<T: Into<f32>>(x: T, y: T, z: T, layer: usize) -> Self {
+    pub fn f32<T: Into<f32>>(x: T, y: T, z: T, layer: Layer) -> Self {
         Self {
             x: x.into(),
             y: y.into(),
@@ -215,11 +215,13 @@ pub fn update_glyph_material(
     }
 }
 
-pub fn update_positions(mut q_changed: Query<(&Position, &mut Transform), Changed<Position>>) {
-    for (position, mut transform) in q_changed.iter_mut() {
-        let z = 100. * position.z + (100. - position.layer as f32);
-        let target = glyph_translation(position.x, position.y).extend(-z);
+pub fn update_positions(mut cmds: Commands, mut q_changed: Query<(Entity, &Position, &mut Transform), Changed<Position>>) {
+    for (entity, position, mut transform) in q_changed.iter_mut() {
+        let z = position.z + position.layer.z();
+        let target = glyph_translation(position.x, position.y).extend(z);
         transform.translation = target;
+
+        cmds.entity(entity).insert(RenderLayers::layer(position.layer as usize));
     }
 }
 

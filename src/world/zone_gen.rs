@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    common::Grid, player::PlayerMovedEvent, projection::{world_to_zone_idx, zone_local_to_world, ZONE_SIZE, Z_LAYER_GROUND}, rendering::{Glyph, Position}, save::{save_zone, try_load_zone}, world::{SimpleZoneBuilder, ZoneBuilder, ENABLE_ZONE_SNAPSHOTS}
+    camera::Layer, common::Grid, player::PlayerMovedEvent, projection::{world_to_zone_idx, zone_local_to_world, ZONE_SIZE, Z_LAYER_GROUND}, rendering::{Glyph, Position}, save::{save_zone, try_load_zone}, world::{SimpleZoneBuilder, ZoneBuilder, ENABLE_ZONE_SNAPSHOTS}
 };
 
 use super::{Map, Zone, ZoneData, ZoneSnapshotsEvent, ZoneStatus, Zones};
@@ -101,7 +101,7 @@ pub fn on_spawn_zone(mut e_spawn_zone: EventReader<SpawnZoneEvent>, mut cmds: Co
                             outline: None,
                             is_shrouded: true,
                         },
-                        Position::new(wpos.0, wpos.1, wpos.2, Z_LAYER_GROUND),
+                        Position::new(wpos.0, wpos.1, wpos.2, Layer::Background),
                         ZoneStatus::Dormant,
                     ))
                     .set_parent(zone_e)
